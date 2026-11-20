@@ -41,19 +41,11 @@ extern "C" {
 void *gala_diffusion_rng_alloc(unsigned long long seed) {
 #if USE_GSL == 1
     gsl_rng *r = gsl_rng_alloc(gsl_rng_mt19937);
-    gsl_rng_set(r, (unsigned long)seed);
+    gsl_rng_set(r, (unsigned long)seed); // NB: mt19937 uses only the low 32 bits
     return (void *)r;
 #else
     (void)seed;
     return NULL;
-#endif
-}
-
-void gala_diffusion_rng_set(void *rng, unsigned long long seed) {
-#if USE_GSL == 1
-    if (rng != NULL) gsl_rng_set((gsl_rng *)rng, (unsigned long)seed);
-#else
-    (void)rng; (void)seed;
 #endif
 }
 
@@ -133,8 +125,11 @@ void diffusion_kick_increments(double t, double dt, double *x, double *v,
         double R1 = R + inc[0], dphi = inc[1] / R;
         double c1 = c * cos(dphi) - s * sin(dphi), s1 = s * cos(dphi) + c * sin(dphi);
         double vR1 = vR + inc[3], vp1 = vp + inc[4];
-        dx[0] = R1 * c1 - x[0];
-        dx[1] = R1 * s1 - x[1];
+        // exact zeros when the position isn't kicked (leapfrog then skips re-evaluating
+        // the gradient; R * c can differ from x[0] by round-off)
+        int moved = (inc[0] != 0.0 || inc[1] != 0.0);
+        dx[0] = moved ? R1 * c1 - x[0] : 0.0;
+        dx[1] = moved ? R1 * s1 - x[1] : 0.0;
         dx[2] = inc[2];
         dv[0] = vR1 * c1 - vp1 * s1 - v[0];
         dv[1] = vR1 * s1 + vp1 * c1 - v[1];
@@ -187,6 +182,20 @@ void gridded_cyl_diffusion(double t, double *pars, double *x, double *v,
             M[i * GALA_DIFF_PS + j] = val;
             M[j * GALA_DIFF_PS + i] = val;
             f++;
+        }
+    }
+
+    // The grid is in |z|: below the midplane, reflect the components that are odd
+    // under z -> -z (mu_z, mu_vz, and tensor entries pairing exactly one of z, v_z
+    // with an in-plane component). Assumes the model is mirror-symmetric about z = 0.
+    if (x[2] < 0.0) {
+        mu[2] = -mu[2];
+        mu[5] = -mu[5];
+        for (int i = 0; i < GALA_DIFF_PS; i++) {
+            int oi = (i == 2 || i == 5);
+            for (int j = 0; j < GALA_DIFF_PS; j++) {
+                if (oi != (j == 2 || j == 5)) M[i * GALA_DIFF_PS + j] = -M[i * GALA_DIFF_PS + j];
+            }
         }
     }
 #else

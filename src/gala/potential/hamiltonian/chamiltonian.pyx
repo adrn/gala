@@ -265,9 +265,13 @@ class Hamiltonian(CommonBase):
             the interval since the last kick). Only supported with the C
             `~gala.integrate.LeapfrogIntegrator` in a static frame, for forward
             integration (``dt > 0``), and requires gala built with GSL.
-        kick_seed : int (optional)
+        kick_seed : int or sequence of int (optional)
             Seed for the kick's random numbers. The same seed reproduces the same
-            noise; by default (``None``) every call draws fresh noise.
+            noise; by default (``None``) every call draws fresh noise. The seed is
+            hashed with `numpy.random.SeedSequence`, but GSL's ``mt19937`` generator
+            keeps only 32 bits of it, so two different seeds give identical noise
+            with probability ~2^-32 per pair (around 50% for an ensemble of ~77,000
+            seeded realizations).
         **time_spec
             Specification of how long to integrate. Most commonly, this is a
             timestep ``dt`` and number of steps ``n_steps``, or a timestep
@@ -357,10 +361,6 @@ class Hamiltonian(CommonBase):
             from ...integrate.timespec import parse_time_specification
 
             t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))
-            if kick_capsule is not None and t.size > 1 and t[1] <= t[0]:
-                raise ValueError(
-                    "The `diffusion` option only supports forward integration (dt > 0)."
-                )
 
             # TODO: these replacements should be defined in gala.integrate...
             # TODO: default kwargs should also be defined in gala.integrate, not here

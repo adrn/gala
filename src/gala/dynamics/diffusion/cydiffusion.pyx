@@ -75,6 +75,14 @@ cdef class CDiffusionWrapper:
 
     def __cinit__(self):
         self._grid = NULL
+        self.cdiffusion.func = NULL
+
+    cdef _check_init(self):
+        if self.cdiffusion.func == NULL:
+            raise RuntimeError(
+                "CDiffusionWrapper is not initialized; build a model such as "
+                "ConstantDiffusion or GriddedDiffusion instead."
+            )
 
     def __dealloc__(self):
         if self._grid != NULL:
@@ -108,6 +116,7 @@ cdef class CDiffusionWrapper:
 
     def coefficients(self, double[:, ::1] xv, double t=0.0):
         """Model-basis drift (n, 6) and tensor (n, 6, 6) at Cartesian xv (n, 6)."""
+        self._check_init()
         cdef int n = xv.shape[0], i
         cdef double[:, ::1] mu = np.zeros((n, 6))
         cdef double[:, :, ::1] M = np.zeros((n, 6, 6))
@@ -122,6 +131,7 @@ cdef class CDiffusionWrapper:
     def kick_capsule(self, unsigned long long seed, int every=1):
         """A new kick (own RNG, seeded with ``seed``, applied every ``every`` steps)
         that keeps this model alive."""
+        self._check_init()
         if every < 1:
             raise ValueError("every must be >= 1")
         cdef void* rng = gala_diffusion_rng_alloc(seed)

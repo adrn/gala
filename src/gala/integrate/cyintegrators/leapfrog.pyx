@@ -102,6 +102,7 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         # optional stochastic kick
         DiffusionKick* dk = NULL
         int j_last = 0
+        int moved
         double kick_dt
         double x_i[3]
         double v_i[3]
@@ -118,6 +119,10 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
             raise ValueError(
                 "Diffusion kicks are only supported for 3D phase space "
                 "(half_ndim == 3)."
+            )
+        if not dt > 0:
+            raise ValueError(
+                "The `diffusion` option only supports forward integration (dt > 0)."
             )
         dk = <DiffusionKick*>PyCapsule_GetPointer(kick_capsule, "gala.DiffusionKick")
 
@@ -148,18 +153,27 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
                 # dk.every steps, covering the interval since the last kick (the final
                 # partial interval is kicked too). dv is added to both the
                 # synchronized velocity (tmp_w) and the half-step-ahead velocity
-                # (v_jm1_2) so it propagates.
+                # (v_jm1_2) so it propagates. If any position moved, the half-step
+                # velocity is rebuilt from the gradient at the kicked positions.
                 kick_dt = (j - j_last) * dt
                 j_last = j
+                moved = 0
                 for i in range(n):
                     for k in range(half_ndim):
                         x_i[k] = tmp_w[k, i]
                         v_i[k] = tmp_w[half_ndim + k, i]
                     dk.kick(t[j], kick_dt, x_i, v_i, dx, dv, dk.state, dk.rng)
                     for k in range(half_ndim):
+                        if dx[k] != 0.:
+                            moved = 1
                         tmp_w[k, i] = tmp_w[k, i] + dx[k]
                         tmp_w[half_ndim + k, i] = tmp_w[half_ndim + k, i] + dv[k]
                         v_jm1_2[k, i] = v_jm1_2[k, i] + dv[k]
+                if moved:
+                    grad_v[:] = 0.
+                    c_init_velocity(cp, n, half_ndim, t[j], dt,
+                                    &tmp_w[0, 0], &tmp_w[half_ndim, 0],
+                                    &v_jm1_2[0, 0], &grad_v[0, 0])
 
             if save_all:
                 for k in range(ndim):

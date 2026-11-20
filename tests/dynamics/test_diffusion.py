@@ -443,3 +443,144 @@ def test_kick_capsule_keeps_model_alive():
     )
     assert np.all(np.isfinite(w))
     assert np.any(w[3:] != 0)
+
+
+def test_direct_leapfrog_rejects_backward_kick():
+    """The forward-only check lives in leapfrog, so direct callers are covered too."""
+    from gala.integrate.cyintegrators import leapfrog_integrate_hamiltonian
+
+    Hn, _ = _free_ensemble(1)
+    cap = _vel_diffusion().kick_capsule(1)
+    with pytest.raises(ValueError, match="forward"):
+        leapfrog_integrate_hamiltonian(
+            Hn, np.zeros((6, 3)), -np.arange(5.0), kick_capsule=cap
+        )
+
+
+def test_position_kick_restarts_leapfrog():
+    """After a kick that moves positions, leapfrog continues exactly as if restarted
+    from the kicked state (the half-step velocity uses the gradient at the new
+    position, not the old one)."""
+    H = gp.Hamiltonian(gp.HernquistPotential(m=1e11, c=5.0, units=galactic))
+    drift = np.array([0.01, -0.02, 0.005, 0, 0, 0])  # kpc/Myr, deterministic
+    diff = ConstantDiffusion(
+        np.zeros((6, 6)), drift=drift, basis="cartesian", units=galactic, kick_every=3
+    )
+    w0 = gd.PhaseSpacePosition(
+        pos=[8.0, 0, 0.5] * u.kpc, vel=[0, 0.2, 0.01] * u.kpc / u.Myr
+    )
+    full = H.integrate_orbit(w0, dt=1.0, n_steps=6, diffusion=diff)
+
+    w3 = H.integrate_orbit(w0, dt=1.0, n_steps=3, diffusion=diff)[-1]
+    plain = H.integrate_orbit(w3, dt=1.0, t1=3.0, n_steps=3)[-1]
+    expected = plain.w(galactic)[:, 0] + drift * 3.0  # the kick at step 6
+    np.testing.assert_allclose(full[-1].w(galactic)[:, 0], expected, rtol=1e-12)
+
+
+def test_cylindrical_azimuthal_position_kick_keeps_R():
+    """basis='cylindrical' is an SDE in the coordinates: a phi-hat kick moves the star
+    along its circle, so R is unchanged (no curvature drift)."""
+    D = np.zeros((6, 6))
+    D[1, 1] = 1.0
+    diff = ConstantDiffusion(D=D, basis="cylindrical", units=galactic)
+    Hn, _ = _free_ensemble(1)
+    w0 = gd.PhaseSpacePosition(
+        pos=np.tile([[8.0], [0], [0]], 200) * u.kpc,
+        vel=np.zeros((3, 200)) * u.kpc / u.Myr,
+    )
+    orb = Hn.integrate_orbit(w0, dt=0.1, n_steps=5, diffusion=diff, kick_seed=3)
+    R = np.hypot(*orb.xyz[:2, -1].to_value(u.kpc))
+    assert np.std(orb.xyz[1, -1].to_value(u.kpc)) > 0.1
+    np.testing.assert_allclose(R, 8.0, rtol=1e-12)
+
+
+def test_gridded_reflects_odd_components_below_midplane():
+    """The grid is in |z|: below the plane, mu_z, mu_vz and tensor entries pairing
+    one of (z, v_z) with an in-plane component flip sign."""
+    R, z = np.linspace(4, 12, 4), np.linspace(0, 3, 4)
+    D = np.diag([1.0, 1, 1, 1, 1, 1]) * 1e-4
+    D[3, 5] = D[5, 3] = 3e-5  # v_R-v_z tilt: odd
+    D[2, 5] = D[5, 2] = 2e-5  # z-v_z: even
+    drift = np.array([1.0, 2, 3, 4, 5, 6]) * 1e-3
+    gdiff = GriddedDiffusion(
+        R, z, np.broadcast_to(D, (4, 4, 6, 6)), np.broadcast_to(drift, (4, 4, 6))
+    )
+    (mu_up, mu_dn), (D_up, D_dn) = gdiff.coefficients(
+        np.array([[8.0, 8], [0, 0], [1, -1], [0, 0], [0, 0], [0, 0]])
+    )
+    np.testing.assert_allclose(mu_up, drift)
+    np.testing.assert_allclose(mu_dn, drift * [1, 1, -1, 1, 1, -1])
+    np.testing.assert_allclose(D_up, D, atol=1e-15)
+    sign = np.ones(6)
+    sign[[2, 5]] = -1
+    np.testing.assert_allclose(D_dn, D * np.outer(sign, sign), atol=1e-15)
+    assert D_dn[3, 5] < 0
+    assert D_dn[2, 5] > 0
+
+
+def test_zero_diagonal_with_offdiagonal_rejected():
+    D = np.zeros((6, 6))
+    D[3, 3] = 1e-8
+    D[0, 3] = D[3, 0] = 1e-12  # D[0, 0] = 0, so this is indefinite
+    with pytest.raises(ValueError, match="semi-definite"):
+        ConstantDiffusion(D=D, units=galactic)
+
+
+def test_coefficients_rejects_wrong_shape():
+    diff = _vel_diffusion()
+    with pytest.raises(ValueError, match="shape"):
+        diff.coefficients(np.ones((2, 6)))
+    mu, D = diff.coefficients(np.ones(6))  # a single point is fine
+    assert mu.shape == (1, 6)
+    assert D.shape == (1, 6, 6)
+
+
+def test_model_does_not_alias_inputs():
+    D = np.diag([0, 0, 0, 1e-4, 1e-4, 1e-4])
+    diff = ConstantDiffusion(D=D, basis="cartesian", units=galactic)
+    D[3, 3] = 5.0
+    assert diff.D[3, 3] == 1e-4
+
+
+def test_uninitialized_wrapper_raises():
+    from gala.dynamics.diffusion.cydiffusion import CDiffusionWrapper
+
+    with pytest.raises(RuntimeError, match="not initialized"):
+        CDiffusionWrapper().coefficients(np.zeros((1, 6)))
+    with pytest.raises(RuntimeError, match="not initialized"):
+        CDiffusionWrapper().kick_capsule(1)
+
+
+@pytest.mark.parametrize("kind", ["constant", "gridded"])
+def test_models_pickle(kind):
+    import pickle
+
+    if kind == "constant":
+        diff = ConstantDiffusion(
+            np.diag([0, 0, 0, 1e-4, 2e-4, 3e-4]),
+            drift=np.arange(6.0) * 1e-4,
+            units=galactic,
+            kick_every=2,
+        )
+    else:
+        Dg = np.zeros((4, 4, 6, 6))
+        Dg[..., 3, 3] = Dg[..., 5, 5] = 1e-4
+        diff = GriddedDiffusion(
+            np.linspace(4, 12, 4),
+            np.linspace(0, 3, 4),
+            Dg,
+            units=galactic,
+            kick_every=2,
+        )
+    diff2 = pickle.loads(pickle.dumps(diff))
+    assert type(diff2) is type(diff)
+    assert diff2.kick_every == 2
+
+    H = gp.Hamiltonian(gp.HernquistPotential(m=1e11, c=5.0, units=galactic))
+    w0 = gd.PhaseSpacePosition(
+        pos=[8.0, 0, 0.5] * u.kpc, vel=[0, 0.2, 0] * u.kpc / u.Myr
+    )
+    kw = {"dt": 1.0, "n_steps": 10, "kick_seed": 4}
+    a = H.integrate_orbit(w0, diffusion=diff, **kw)
+    b = H.integrate_orbit(w0, diffusion=diff2, **kw)
+    np.testing.assert_array_equal(a.xyz.value, b.xyz.value)

@@ -2,8 +2,11 @@
     C-level scaffolding for velocity/position-space diffusion models used by the trial
     SDE integrator (see gala.dynamics.diffusion). A "diffusion model" fills a drift
     vector and a diffusion tensor (in a chosen basis) at a phase-space point; the kick
-    rotates these to Cartesian, factorizes, draws noise, and returns the phase-space
-    increment.
+    factorizes the tensor, draws noise, forms the Euler-Maruyama increment in the
+    model's coordinates, and returns the resulting Cartesian change. For the
+    cylindrical basis the increment updates the coordinates (R, phi, z, v_R, v_phi, v_z)
+    (an Ito SDE in those coordinates, with phi entries as arc length R dphi), not a
+    fixed-frame Cartesian displacement.
 
     This is 3D-only (n_dim = 3, phase space = 6), matching gala's builtin potentials.
 */
@@ -12,8 +15,7 @@
 
 #include "diffusion_kick.h"
 
-#define GALA_DIFF_NDIM 3
-#define GALA_DIFF_PS 6 /* phase-space dimension = 2 * NDIM */
+#define GALA_DIFF_PS 6 /* phase-space dimension (3D) */
 
 /* Coefficient basis (orientation of the drift/diffusion coefficients). */
 #define GALA_DIFF_BASIS_CARTESIAN 0
@@ -43,7 +45,6 @@ extern "C" {
 
 /* ---- RNG (GSL-backed when USE_GSL, else no-ops) ---- */
 void *gala_diffusion_rng_alloc(unsigned long long seed);
-void gala_diffusion_rng_set(void *rng, unsigned long long seed);
 double gala_diffusion_rng_gaussian(void *rng); /* ~ N(0, 1) */
 void gala_diffusion_rng_free(void *rng);
 

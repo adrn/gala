@@ -17,6 +17,7 @@ carry the mixed position/velocity units of the full tensor, so Quantities are re
 kpc/Myr, Myr). Build the model in the same unit system you integrate in.
 """
 
+import functools
 import operator
 
 import numpy as np
@@ -25,6 +26,7 @@ from ...units import UnitSystem
 from .cydiffusion import (
     BASIS_CARTESIAN,
     BASIS_CYLINDRICAL,
+    NFIELDS,
     CDiffusionWrapper,
 )
 
@@ -40,7 +42,7 @@ def _check_plain(name, arr):
             "not an astropy Quantity (the full phase-space tensor mixes position "
             "and velocity units). See the gala.dynamics.diffusion unit convention."
         )
-    arr = np.ascontiguousarray(np.asarray(arr, dtype=np.float64))
+    arr = np.array(arr, dtype=np.float64, order="C")  # a copy: don't alias the input
     if not np.all(np.isfinite(arr)):
         raise ValueError(f"`{name}` must be finite (no NaN or inf).")
     return arr
@@ -59,7 +61,14 @@ def _check_psd(name, D, tol=1e-10):
     C = D / (s[..., :, None] * s[..., None, :])
     if np.abs(C - np.swapaxes(C, -1, -2)).max() > tol:
         raise ValueError(f"`{name}` must be symmetric.")
-    if np.any(d < 0) or np.linalg.eigvalsh(C).min() < -tol:
+    # a zero diagonal forces its whole row/column to zero (otherwise D is indefinite,
+    # however small the off-diagonal entry; the normalization above can't see it)
+    zero = d == 0
+    if (
+        np.any(d < 0)
+        or np.any(zero[..., :, None] & (D != 0))
+        or np.linalg.eigvalsh(C).min() < -tol
+    ):
         raise ValueError(f"`{name}` must be positive semi-definite.")
 
 
@@ -92,9 +101,23 @@ class DiffusionBase:
 
     ``units`` is only used to check consistency against the integration Hamiltonian
     (a mismatch raises); it does **not** convert the coefficients, so they must
-    already be in that system. For ``basis='cylindrical'`` the components are
-    physical values along the (R-hat, phi-hat, z-hat) unit vectors -- the ``phi``
-    entries are lengths / velocities, not radians.
+    already be in that system.
+
+    **Cylindrical basis.** With ``basis='cylindrical'`` the model is an Ito SDE in the
+    cylindrical coordinates ``(R, phi, z, v_R, v_phi, v_z)``: each kick updates those
+    coordinates directly, and the velocities stay attached to the local frame at the
+    new azimuth. The ``phi`` entries are in arc length (``R dphi``) and the
+    corresponding velocity, not radians. This is the natural form for models built
+    from actions/angles, but note that it is *not* the same as an isotropic physical
+    displacement: an azimuthal position kick moves a star along its circle and leaves
+    ``R`` unchanged, so the curvature drift ``D_phiphi / (2 R)`` in ``R`` that a
+    straight-line kick would produce is not added. For isotropic *position* diffusion
+    use ``basis='cartesian'`` (or add that drift yourself). Velocity-only diffusion is
+    the same in either basis.
+
+    **Seeds.** The kick's random number generator (GSL ``mt19937``) uses 32 bits of
+    the hashed ``kick_seed``, so distinct seeds collide with probability ~2^-32 per
+    pair.
     """
 
     def __init__(self, basis="cylindrical", units=None, kick_every=1):
@@ -137,8 +160,21 @@ class DiffusionBase:
         """
         if hasattr(w, "w"):
             w = w.w(self.units)
-        xv = np.ascontiguousarray(np.asarray(w, dtype=np.float64).reshape(6, -1).T)
+        w = np.asarray(w, dtype=np.float64)
+        if w.ndim > 2 or w.shape[0] != 6:
+            raise ValueError(
+                f"`w` must have shape (6,) or (6, n) (x, y, z, vx, vy, vz), got {w.shape}"
+            )
+        xv = np.ascontiguousarray(w.reshape(6, -1).T)
         return self.c_instance.coefficients(xv, float(t))
+
+    def _init_kwargs(self):
+        """Constructor arguments that rebuild this model (used for pickling)."""
+        raise NotImplementedError
+
+    def __reduce__(self):
+        # the C model holds raw pointers, so rebuild from the constructor arguments
+        return (functools.partial(type(self), **self._init_kwargs()), ())
 
 
 class ConstantDiffusion(DiffusionBase):
@@ -191,6 +227,15 @@ class ConstantDiffusion(DiffusionBase):
         wrapper.init_constant(params, _BASIS[basis])
         self.c_instance = wrapper
 
+    def _init_kwargs(self):
+        return {
+            "D": self.D,
+            "drift": self.drift,
+            "basis": self.basis,
+            "units": self.units,
+            "kick_every": self.kick_every,
+        }
+
 
 class GriddedDiffusion(DiffusionBase):
     """Drift + diffusion tensor interpolated over a regular ``(R, |z|)`` grid.
@@ -225,7 +270,16 @@ class GriddedDiffusion(DiffusionBase):
     follows the same block-unit convention) and a conversion example.
 
     Outside the ``(R, |z|)`` grid bounds the coefficients are taken to be zero (no
-    drift, no diffusion) -- values are not extrapolated beyond the grid.
+    drift, no diffusion) -- values are not extrapolated beyond the grid. So a grid
+    that starts above ``|z| = 0`` (or above the smallest ``R`` your orbits reach)
+    switches diffusion off there, e.g. at the midplane; start ``z_grid`` at 0 to
+    cover it.
+
+    The grid holds values for ``z >= 0`` and the model is assumed mirror-symmetric
+    about the midplane: at ``z < 0`` the components that are odd under
+    ``z -> -z`` change sign. These are the drifts ``mu_z`` and ``mu_vz`` and the
+    tensor entries pairing exactly one of ``z, v_z`` with an in-plane component
+    (e.g. ``D[v_R, v_z]``, the tilt of the velocity ellipsoid).
 
     Each tensor component is interpolated independently, so between nodes the
     interpolated ``D`` can be slightly non-positive-definite even when every node is
@@ -265,7 +319,7 @@ class GriddedDiffusion(DiffusionBase):
         _check_psd("D_grid", D_grid)
 
         # pack fields: [0:6] = drift, [6:27] = upper-triangular tensor
-        fields = np.zeros((27, nR, nz), dtype=np.float64)
+        fields = np.zeros((NFIELDS, nR, nz), dtype=np.float64)
         if drift_grid is not None:
             drift_grid = _check_plain("drift_grid", drift_grid)
             if drift_grid.shape != (nR, nz, 6):
@@ -282,8 +336,20 @@ class GriddedDiffusion(DiffusionBase):
                 f += 1
 
         self.R_grid, self.z_grid, self.D_grid = R, z, D_grid
+        self.drift_grid = drift_grid
         fields_flat = np.ascontiguousarray(fields.ravel(), dtype=np.float64)
 
         wrapper = CDiffusionWrapper()
         wrapper.init_gridded(R, z, fields_flat, nR, nz, _BASIS[basis])
         self.c_instance = wrapper
+
+    def _init_kwargs(self):
+        return {
+            "R_grid": self.R_grid,
+            "z_grid": self.z_grid,
+            "D_grid": self.D_grid,
+            "drift_grid": self.drift_grid,
+            "basis": self.basis,
+            "units": self.units,
+            "kick_every": self.kick_every,
+        }
