@@ -426,6 +426,8 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         Integrator_kwargs=None,
         cython_if_possible=True,
         save_all=True,
+        diffusion=None,
+        kick_seed=None,
         **time_spec,
     ):
         """
@@ -450,6 +452,10 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
             Controls whether to store the phase-space position at all intermediate
             timesteps. Set to False to store only the final values (i.e. the
             phase-space position(s) at the final timestep). Default is True.
+        diffusion : `~gala.dynamics.diffusion.DiffusionBase` (optional)
+            Stochastic diffusion model; see `gala.potential.Hamiltonian.integrate_orbit`.
+        kick_seed : int (optional)
+            Seed for the diffusion kick; see `gala.potential.Hamiltonian.integrate_orbit`.
         **time_spec
             Specification of how long to integrate. See documentation
             for `~gala.integrate.parse_time_specification`.
@@ -478,6 +484,8 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
             Integrator_kwargs=Integrator_kwargs,
             cython_if_possible=cython_if_possible,
             save_all=save_all,
+            diffusion=diffusion,
+            kick_seed=kick_seed,
             t=t,
         )
 
