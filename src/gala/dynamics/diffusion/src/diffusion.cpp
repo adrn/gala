@@ -69,7 +69,7 @@ void gala_diffusion_rng_free(void *rng) {
 
 // ---- Cholesky (lower-triangular, clamps non-PD directions to zero) ----
 
-int gala_diffusion_cholesky(const double *M, int n, double *L) {
+void gala_diffusion_cholesky(const double *M, int n, double *L) {
     for (int i = 0; i < n * n; i++) L[i] = 0.0;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j <= i; j++) {
@@ -83,7 +83,6 @@ int gala_diffusion_cholesky(const double *M, int n, double *L) {
             }
         }
     }
-    return 0;
 }
 
 // ---- The kick ----

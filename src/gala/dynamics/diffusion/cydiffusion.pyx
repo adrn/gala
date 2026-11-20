@@ -39,7 +39,7 @@ cdef extern from "dynamics/diffusion/src/diffusion.h":
 
     void* gala_diffusion_rng_alloc(unsigned long long seed) nogil
     void gala_diffusion_rng_free(void* rng) nogil
-    int gala_diffusion_cholesky(const double *M, int n, double *L) nogil
+    void gala_diffusion_cholesky(const double *M, int n, double *L) nogil
     void diffusion_kick_increments(double t, double dt, double *x, double *v,
                                    double *dx, double *dv, void *state, void *rng) noexcept nogil
     void constant_diffusion(double t, double *pars, double *x, double *v,

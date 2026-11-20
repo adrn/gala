@@ -50,7 +50,7 @@ void gala_diffusion_rng_free(void *rng);
 
 /* Lower-triangular Cholesky of symmetric n x n M (row-major) into L; non-PD directions
    clamped to zero so PSD/zero M is safe. */
-int gala_diffusion_cholesky(const double *M, int n, double *L);
+void gala_diffusion_cholesky(const double *M, int n, double *L);
 
 /* The kick: DiffusionKick.kick points here. state is a CDiffusion*, rng a gsl_rng*. */
 void diffusion_kick_increments(double t, double dt, double *x, double *v,

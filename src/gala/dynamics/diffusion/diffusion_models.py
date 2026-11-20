@@ -1,21 +1,4 @@
-"""
-Python-facing diffusion models for the trial in-integrator SDE kick.
-
-A model provides a drift vector ``mu`` (length 6) and a diffusion tensor ``D`` (6x6,
-symmetric) over the phase space ``(x, y, z, vx, vy, vz)``, expressed in a chosen
-``basis`` and either constant or varying over a ``(R, |z|)`` grid. The per-step kick
-has increment ``dw = mu*dt + L*sqrt(dt)*xi`` with ``L L^T = D`` (rotated into
-Cartesian), i.e. ``Cov(dw) = D*dt``.
-
-Unit convention
----------------
-Coefficients are plain numeric arrays already expressed in the integrator's unit
-system, with phase-space ordering ``(R, phi, z, v_R, v_phi, v_z)`` for cylindrical
-basis (or ``(x, y, z, vx, vy, vz)`` for cartesian). A single astropy Quantity cannot
-carry the mixed position/velocity units of the full tensor, so Quantities are rejected
--- pass numbers in the system's length and length/time units (e.g. galactic: kpc,
-kpc/Myr, Myr). Build the model in the same unit system you integrate in.
-"""
+"""Diffusion models for the in-integrator SDE kick; see `DiffusionBase`."""
 
 import functools
 import operator
@@ -40,7 +23,7 @@ def _check_plain(name, arr):
         raise TypeError(
             f"`{name}` must be a plain numeric array in the model's unit system, "
             "not an astropy Quantity (the full phase-space tensor mixes position "
-            "and velocity units). See the gala.dynamics.diffusion unit convention."
+            "and velocity units). See the DiffusionBase docstring for units."
         )
     arr = np.array(arr, dtype=np.float64, order="C")  # a copy: don't alias the input
     if not np.all(np.isfinite(arr)):
@@ -126,15 +109,11 @@ class DiffusionBase:
         self.basis = basis
         if units is not None and not isinstance(units, UnitSystem):
             units = UnitSystem(units)
-        self._units = units
+        self.units = units
         self.kick_every = operator.index(kick_every)
         if self.kick_every < 1:
             raise ValueError(f"kick_every must be >= 1, got {kick_every}")
         self.c_instance = None  # subclasses build this
-
-    @property
-    def units(self):
-        return self._units
 
     def kick_capsule(self, seed):
         """A fresh kick (own RNG) for one integration; it keeps this model alive."""
@@ -168,12 +147,9 @@ class DiffusionBase:
         xv = np.ascontiguousarray(w.reshape(6, -1).T)
         return self.c_instance.coefficients(xv, float(t))
 
-    def _init_kwargs(self):
-        """Constructor arguments that rebuild this model (used for pickling)."""
-        raise NotImplementedError
-
     def __reduce__(self):
         # the C model holds raw pointers, so rebuild from the constructor arguments
+        # (each subclass defines _init_kwargs)
         return (functools.partial(type(self), **self._init_kwargs()), ())
 
 
@@ -198,10 +174,7 @@ class ConstantDiffusion(DiffusionBase):
 
     Notes
     -----
-    ``D`` and ``drift`` must be plain numeric arrays already in the base units of
-    ``units``; astropy ``Quantity`` inputs are rejected because the full 6x6 tensor
-    mixes position and velocity units. See `DiffusionBase` for the per-block unit
-    table and a conversion example.
+    See `DiffusionBase` for units.
     """
 
     def __init__(self, D, drift=None, basis="cylindrical", units=None, kick_every=1):
@@ -222,7 +195,7 @@ class ConstantDiffusion(DiffusionBase):
         self.D = D
         self.drift = mu
 
-        params = np.ascontiguousarray(np.concatenate([mu, D.ravel()]), dtype=np.float64)
+        params = np.concatenate([mu, D.ravel()])
         wrapper = CDiffusionWrapper()
         wrapper.init_constant(params, _BASIS[basis])
         self.c_instance = wrapper
@@ -263,11 +236,7 @@ class GriddedDiffusion(DiffusionBase):
 
     Notes
     -----
-    All inputs (``R_grid``, ``z_grid``, ``D_grid``, ``drift_grid``) must be plain
-    numeric arrays already in the base units of ``units``; astropy ``Quantity``
-    inputs are rejected because the full 6x6 tensor mixes position and velocity
-    units. See `DiffusionBase` for the per-block unit table (each ``D_grid`` node
-    follows the same block-unit convention) and a conversion example.
+    See `DiffusionBase` for units.
 
     Outside the ``(R, |z|)`` grid bounds the coefficients are taken to be zero (no
     drift, no diffusion) -- values are not extrapolated beyond the grid. So a grid
@@ -327,17 +296,12 @@ class GriddedDiffusion(DiffusionBase):
                     f"`drift_grid` must have shape ({nR}, {nz}, 6), got "
                     f"{drift_grid.shape}"
                 )
-            for k in range(6):
-                fields[k] = drift_grid[..., k]
-        f = 6
-        for i in range(6):
-            for j in range(i, 6):
-                fields[f] = D_grid[..., i, j]
-                f += 1
+            fields[:6] = np.moveaxis(drift_grid, -1, 0)
+        fields[6:] = np.moveaxis(D_grid[..., *np.triu_indices(6)], -1, 0)
 
         self.R_grid, self.z_grid, self.D_grid = R, z, D_grid
         self.drift_grid = drift_grid
-        fields_flat = np.ascontiguousarray(fields.ravel(), dtype=np.float64)
+        fields_flat = fields.ravel()
 
         wrapper = CDiffusionWrapper()
         wrapper.init_gridded(R, z, fields_flat, nR, nz, _BASIS[basis])
