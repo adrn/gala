@@ -1004,8 +1004,7 @@ class NFWPotential(CPotentialBase):
 @format_doc(common_doc=_potential_docstring)
 class LogarithmicPotential(CPotentialBase):
     r"""
-    LogarithmicPotential(v_c, r_h, q1, q2, q3, phi=0, theta=0, psi=0, units=None,
-    origin=None, R=None)
+    LogarithmicPotential(v_c, r_h, q1, q2, q3, phi=0, units=None, origin=None, R=None)
 
     Triaxial logarithmic potential.
 
@@ -1021,8 +1020,9 @@ class LogarithmicPotential(CPotentialBase):
         Flattening in Y.
     q3 : numeric
         Flattening in Z.
-    phi : `~astropy.units.Quantity`, numeric
-        First euler angle in the z-x-z convention.
+    phi : `~astropy.units.Quantity`, numeric [angle]
+        Rotation angle about the z axis, measured counterclockwise from the x axis to
+        the ``q1`` axis.
     {common_doc}
     """
 
