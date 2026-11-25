@@ -23,12 +23,12 @@ New Features
 - ``fast_lyapunov_max()`` now accepts an ``rng`` argument (a ``numpy.random.Generator``)
   for the initial offset vectors, matching ``lyapunov_max()``.
 
-- Added stochastic diffusion to orbit integration. ``integrate_orbit()`` has new
-  ``diffusion`` and ``kick_seed`` arguments: a diffusion model from the new
-  ``gala.dynamics.diffusion`` subpackage (``ConstantDiffusion``, or
-  ``GriddedDiffusion`` for coefficients that vary over an ``(R, |z|)`` grid) applies an
-  Euler-Maruyama kick to positions and/or velocities during leapfrog integration
-  (requires GSL). See the new "Blurring a phase spiral" tutorial.
+- Added support for stochastic diffusion to orbit integration. ``integrate_orbit()`` has
+  new ``diffusion`` and ``kick_seed`` arguments: a diffusion model from the new
+  ``gala.dynamics.diffusion`` subpackage (``ConstantDiffusion``, or ``GriddedDiffusion``
+  for coefficients that vary over an ``(R, |z|)`` grid) applies an Euler-Maruyama kick
+  to positions and/or velocities during leapfrog integration (requires GSL). See the new
+  "Blurring a phase spiral" tutorial.
 
 
 Bug fixes
