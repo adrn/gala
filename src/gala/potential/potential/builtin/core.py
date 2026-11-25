@@ -1042,7 +1042,11 @@ class LogarithmicPotential(CPotentialBase):
     def to_sympy(cls, v, p):
         import sympy as sy
 
-        r2 = (v["x"] / p["q1"]) ** 2 + (v["y"] / p["q2"]) ** 2 + (v["z"] / p["q3"]) ** 2
+        x = v["x"] * sy.cos(p["phi"]) + v["y"] * sy.sin(p["phi"])
+        y = -v["x"] * sy.sin(p["phi"]) + v["y"] * sy.cos(p["phi"])
+        z = v["z"]
+
+        r2 = (x / p["q1"]) ** 2 + (y / p["q2"]) ** 2 + (z / p["q3"]) ** 2
         expr = 1.0 / 2 * p["v_c"] ** 2 * sy.log(p["r_h"] ** 2 + r2)
         return expr, v, p
 

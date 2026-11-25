@@ -439,6 +439,13 @@ class TestLogarithmic(PotentialTestBase):
     check_zero_at_infinity = False
 
 
+class TestLogarithmicPhi(TestLogarithmic):
+    # gala#633: density/hessian/to_sympy ignored phi
+    potential = p.LogarithmicPotential(
+        units=galactic, v_c=0.17, r_h=10.0, q1=1.2, q2=1.0, q3=0.8, phi=0.3
+    )
+
+
 class TestLongMuraliBar(PotentialTestBase):
     potential = CANONICAL["LongMuraliBarPotential"]
     vc = potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic).value[0]
