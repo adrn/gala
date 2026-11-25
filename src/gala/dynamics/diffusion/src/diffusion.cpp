@@ -15,6 +15,7 @@
 #include "gsl/gsl_interp2d.h"
 #include "gsl/gsl_spline2d.h"
 #include "gsl/gsl_errno.h"
+#include "gsl/gsl_eigen.h"
 
 /* restores the GSL error handler on scope exit (same pattern as staeckel_fudge.cpp) */
 struct GSLErrorHandlerOff {
@@ -67,15 +68,20 @@ void gala_diffusion_rng_free(void *rng) {
 #endif
 }
 
-// ---- Cholesky (lower-triangular, clamps non-PD directions to zero) ----
+// ---- Cholesky (lower-triangular) ----
 
-void gala_diffusion_cholesky(const double *M, int n, double *L) {
+/* Plain Cholesky that zeroes non-positive pivots. Returns 1 if a pivot is clearly
+   negative, i.e. M is indefinite: then the clamped L can be far from M (a tiny pivot
+   divides the next column), so the caller must not use it. */
+static int cholesky_clamped(const double *M, int n, double *L) {
+    int indefinite = 0;
     for (int i = 0; i < n * n; i++) L[i] = 0.0;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j <= i; j++) {
             double s = M[i * n + j];
             for (int k = 0; k < j; k++) s -= L[i * n + k] * L[j * n + k];
             if (i == j) {
+                if (s < -1e-10 * fabs(M[i * n + i])) indefinite = 1;
                 L[i * n + j] = (s > 0.0) ? sqrt(s) : 0.0;
             } else {
                 double Ljj = L[j * n + j];
@@ -83,6 +89,36 @@ void gala_diffusion_cholesky(const double *M, int n, double *L) {
             }
         }
     }
+    return indefinite;
+}
+
+/* Factor L L^T = M. An indefinite M (e.g. from interpolating a tensor component-wise
+   between PSD grid nodes) is first replaced by its nearest PSD matrix (negative
+   eigenvalues set to zero), which changes M by at most |lambda_min| in norm. */
+void gala_diffusion_cholesky(const double *M, int n, double *L) {
+    if (!cholesky_clamped(M, n, L)) return;
+#if USE_GSL == 1
+    double A[GALA_DIFF_PS * GALA_DIFF_PS], V[GALA_DIFF_PS * GALA_DIFF_PS];
+    double lam[GALA_DIFF_PS], P[GALA_DIFF_PS * GALA_DIFF_PS];
+    if (n > GALA_DIFF_PS) return;
+    memcpy(A, M, (size_t)n * n * sizeof(double));
+    gsl_matrix_view Am = gsl_matrix_view_array(A, n, n);
+    gsl_matrix_view Vm = gsl_matrix_view_array(V, n, n);
+    gsl_vector_view lv = gsl_vector_view_array(lam, n);
+    gsl_eigen_symmv_workspace *w = gsl_eigen_symmv_alloc(n);
+    if (w == NULL) return;
+    gsl_eigen_symmv(&Am.matrix, &lv.vector, &Vm.matrix, w);
+    gsl_eigen_symmv_free(w);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            double sum = 0.0;
+            for (int k = 0; k < n; k++)
+                if (lam[k] > 0.0) sum += V[i * n + k] * lam[k] * V[j * n + k];
+            P[i * n + j] = sum;
+        }
+    }
+    cholesky_clamped(P, n, L);
+#endif
 }
 
 // ---- The kick ----

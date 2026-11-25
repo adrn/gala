@@ -584,3 +584,45 @@ def test_models_pickle(kind):
     a = H.integrate_orbit(w0, diffusion=diff, **kw)
     b = H.integrate_orbit(w0, diffusion=diff2, **kw)
     np.testing.assert_array_equal(a.xyz.value, b.xyz.value)
+
+
+def test_indefinite_interpolated_tensor_is_projected_not_amplified():
+    """An indefinite tensor (as bicubic interpolation can produce between PSD nodes)
+    is projected to the nearest PSD one. Clamping Cholesky pivots instead turns
+    [[1e-18, 1e-9], [1e-9, 1e-6]] into a v_y variance of ~1, not ~1e-6."""
+    from gala.dynamics.diffusion.cydiffusion import CDiffusionWrapper
+
+    nR = nz = 4
+    fields = np.zeros((27, nR, nz))
+    iu = list(zip(*np.triu_indices(6)))
+    fields[6 + iu.index((3, 3))] = 1e-18
+    fields[6 + iu.index((3, 4))] = 1e-9
+    fields[6 + iu.index((4, 4))] = 1e-6
+    wrapper = CDiffusionWrapper()  # bypass GriddedDiffusion's PSD check of the nodes
+    wrapper.init_gridded(
+        np.linspace(4.0, 12, nR), np.linspace(0.0, 3, nz), fields.ravel(), nR, nz, 0
+    )
+
+    from gala.integrate.cyintegrators import leapfrog_integrate_hamiltonian
+
+    Hn, _ = _free_ensemble(1)
+    N = 4000
+    w0 = np.zeros((6, N))
+    w0[0] = 8.0
+    _, w = leapfrog_integrate_hamiltonian(
+        Hn,
+        w0,
+        np.array([0.0, 1.0]),
+        save_all=False,
+        kick_capsule=wrapper.kick_capsule(1),
+    )
+    # nearest PSD tensor has D_vyvy ~ 1e-6 (plus ~1e-12): Var(v_y) = D dt
+    np.testing.assert_allclose(w[4].var(), 1e-6, rtol=0.1)
+    assert w[3].var() < 1e-11
+
+
+def test_nonuniform_time_grid_rejected():
+    Hn, w0 = _free_ensemble(3)
+    for t in ([0.0, 1.0, 3.0], [0.0, 1.0, 1.0], [0.0, 1.0, np.nan]):
+        with pytest.raises(ValueError, match="uniformly spaced"):
+            Hn.integrate_orbit(w0, t=np.array(t), diffusion=_vel_diffusion())

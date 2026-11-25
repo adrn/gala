@@ -252,8 +252,9 @@ class GriddedDiffusion(DiffusionBase):
 
     Each tensor component is interpolated independently, so between nodes the
     interpolated ``D`` can be slightly non-positive-definite even when every node is
-    PSD (e.g. where a coefficient varies sharply). Any negative directions are then
-    clamped to zero by the kick's Cholesky factorization.
+    PSD (e.g. where a coefficient varies sharply). The kick then uses the nearest PSD
+    tensor (negative eigenvalues set to zero), which differs from the interpolated one
+    by at most the size of its most negative eigenvalue.
     """
 
     def __init__(

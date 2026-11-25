@@ -124,6 +124,13 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
             raise ValueError(
                 "The `diffusion` option only supports forward integration (dt > 0)."
             )
+        # leapfrog steps with the first interval throughout, so the kick needs a
+        # uniform grid to get the right diffusion time
+        dts = np.diff(np.asarray(t))
+        if not (np.all(np.isfinite(dts)) and np.allclose(dts, dt, rtol=1e-6, atol=0)):
+            raise ValueError(
+                "The `diffusion` option needs a finite, uniformly spaced time grid."
+            )
         dk = <DiffusionKick*>PyCapsule_GetPointer(kick_capsule, "gala.DiffusionKick")
 
     if save_all:

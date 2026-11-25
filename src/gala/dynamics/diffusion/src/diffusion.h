@@ -48,8 +48,9 @@ void *gala_diffusion_rng_alloc(unsigned long long seed);
 double gala_diffusion_rng_gaussian(void *rng); /* ~ N(0, 1) */
 void gala_diffusion_rng_free(void *rng);
 
-/* Lower-triangular Cholesky of symmetric n x n M (row-major) into L; non-PD directions
-   clamped to zero so PSD/zero M is safe. */
+/* Lower-triangular L with L L^T = M for symmetric n x n M (row-major, n <= 6). PSD
+   (incl. singular) M is factored directly; an indefinite M is first projected to the
+   nearest PSD matrix (negative eigenvalues zeroed; needs GSL). */
 void gala_diffusion_cholesky(const double *M, int n, double *L);
 
 /* The kick: DiffusionKick.kick points here. state is a CDiffusion*, rng a gsl_rng*. */
