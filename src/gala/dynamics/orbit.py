@@ -5,13 +5,14 @@ import astropy.coordinates as coord
 import astropy.table as at
 import astropy.units as u
 import numpy as np
+from astropy.utils.decorators import deprecated
 from scipy.signal import argrelmax
 
 from gala.logging import logger
 
 from ..io import quantity_from_hdf5, quantity_to_hdf5
 from ..units import DimensionlessUnitSystem, UnitSystem, dimensionless
-from ..util import atleast_2d
+from ..util import GalaDeprecationWarning, atleast_2d
 from .core import PhaseSpacePosition, _get_rep_name
 from .plot import plot_projections
 from .util import peak_to_peak_period
@@ -1298,6 +1299,13 @@ class Orbit(PhaseSpacePosition):
     # Compatibility with other packages
     #
 
+    @deprecated(
+        "1.13",
+        alternative="galpy.orbit.Orbit directly (it accepts a SkyCoord or Quantity "
+        "arrays)",
+        obj_type="method",
+        warning_type=GalaDeprecationWarning,
+    )
     def to_galpy_orbit(self, ro=None, vo=None):
         """Convert this object to a ``galpy.Orbit`` instance.
 
@@ -1348,6 +1356,12 @@ class Orbit(PhaseSpacePosition):
 
         return o
 
+    @deprecated(
+        "1.13",
+        alternative="the galpy Orbit's coordinate methods (e.g., x(), vx()) to "
+        "construct an Orbit",
+        warning_type=GalaDeprecationWarning,
+    )
     @classmethod
     def from_galpy_orbit(self, galpy_orbit):
         """Create a Gala ``PhaseSpacePosition`` or ``Orbit`` instance from a

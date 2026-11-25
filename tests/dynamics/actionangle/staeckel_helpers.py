@@ -43,6 +43,7 @@ def galpy_find_actions_staeckel_fudge(
 
     """
     from galpy.actionAngle import actionAngleStaeckel
+    from galpy.orbit import Orbit as GalpyOrbit
 
     if delta is None:
         delta = get_staeckel_fudge_delta(potential, w)
@@ -73,7 +74,17 @@ def galpy_find_actions_staeckel_fudge(
 
     rows = []
     for w_, delta_ in zip(iter_, delta):
-        o = w_.to_galpy_orbit(ro, vo)
+        cyl = w_.cylindrical
+        vT = (cyl.rho * cyl.pm_phi).to_value(vo, u.dimensionless_angles())
+        vxvv = [
+            cyl.rho.to_value(ro),
+            cyl.v_rho.to_value(vo),
+            vT,
+            cyl.z.to_value(ro),
+            cyl.v_z.to_value(vo),
+            cyl.phi.to_value(u.rad),
+        ]
+        o = GalpyOrbit(np.array(vxvv).T, ro=ro, vo=vo)
         aAS = actionAngleStaeckel(pot=galpy_potential, delta=delta_)
 
         aaf = aAS.actionsFreqsAngles(o)
