@@ -86,6 +86,9 @@ Bug fixes
 - Leapfrog integration now raises an error for a time grid with fewer than two times,
   instead of reading out of bounds.
 
+- Fixed ``LogarithmicPotential.density()``, ``hessian()``, and ``to_sympy()``, which
+  ignored the rotation angle ``phi``.
+
 API changes
 -----------
 
