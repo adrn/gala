@@ -101,6 +101,10 @@ API changes
   supported for interoperability, but must be installed separately.
   ``isochrone_aa_to_xv()`` no longer requires ``twobody``.
 
+- ``Orbit.to_galpy_orbit()`` and ``Orbit.from_galpy_orbit()`` are deprecated and will
+  be removed in a future release. Construct a ``galpy.orbit.Orbit`` directly instead
+  (it accepts an astropy ``SkyCoord``).
+
 - The ``shared`` and ``extra`` optional dependencies are merged into ``extra``
   (``pip install gala[extra]``).
 
