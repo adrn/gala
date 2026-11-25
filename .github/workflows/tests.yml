@@ -238,3 +238,22 @@ jobs:
         env:
           OMP_NUM_THREADS: 1
         run: uv run --no-sync pytest -n auto -ra
+
+  # The single required status check for main: matrix job names change as
+  # versions are bumped, this one does not.
+  status:
+    name: CI Pass
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() }}
+    # check_skip_flags is listed so that its failure, which skips tests and galpy,
+    # still fails this gate instead of passing as an allowed skip.
+    needs: [check_skip_flags, tests, galpy]
+    steps:
+      - name: All required jobs passed
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          # alls-green counts a skipped job as a failure unless it is listed
+          # here. tests and galpy are skipped on purpose for draft PRs, the
+          # "skip tests" label, and the "[skip tests]" commit flag.
+          allowed-skips: tests, galpy
+          jobs: ${{ toJSON(needs) }}
