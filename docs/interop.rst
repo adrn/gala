@@ -26,53 +26,19 @@ Galactic dynamics with similar functionality to Gala. For example, Galpy
 supports creating gravitational potential objects and numerically integrating
 orbits (among other things).
 
-Gala provides an interface for converting representations of orbits from Gala to
-Galpy, or from Galpy to Gala. To convert a Gala :class:`~gala.dynamics.Orbit`
-object to a Galpy ``Orbit``, use the
-:meth:`~gala.dynamics.Orbit.to_galpy_orbit()` method:
-
-.. doctest-requires:: galpy
-
-    >>> w0 = gd.PhaseSpacePosition(pos=[10., 0, 0] * u.kpc,
-    ...                            vel=[0, 0, 200.] * u.km/u.s)
-    >>> mw = gp.Hamiltonian(gp.MilkyWayPotential(version="v2"))
-    >>> orbit = mw.integrate_orbit(w0, dt=1, n_steps=1000)
-    >>> orbit
-    <Orbit cartesian, dim=3, shape=(1001,)>
-    >>> galpy_orbit = orbit.to_galpy_orbit()
-    >>> galpy_orbit  # doctest: +SKIP
-    <galpy.orbit.Orbits.Orbit object at 0x7f99b3c8fe80>
-
-Similarly, a Galpy ``Orbit`` can be converted to a Gala
-:class:`~gala.dynamics.Orbit` using the
-:meth:`~gala.dynamics.Orbit.from_galpy_orbit()` classmethod:
-
-.. doctest-requires:: galpy
-
-    >>> import galpy.potential as galpy_p
-    >>> import galpy.orbit as galpy_o
-    >>> mp = galpy_p.MiyamotoNagaiPotential(a=0.5, b=0.0375, amp=1.,
-    ...                                     normalize=1.)
-    >>> galpy_orbit = galpy_o.Orbit([1., 0.1, 1.1, 0., 0.1, 1.])
-    >>> ts = np.linspace(0, 100, 10000)
-    >>> galpy_orbit.integrate(ts, mp, method="odeint")
-    >>> orbit = gd.Orbit.from_galpy_orbit(galpy_orbit)
-    >>> orbit
-    <Orbit cylindrical, dim=3, shape=(10000,)>
-
-Gala also provides tools for converting potential objects to `galpy` potential
+Gala provides tools for converting potential objects to `galpy` potential
 objects, or creating Gala potential objects from existing `galpy` potentials.
 To convert a Gala potential to a Galpy potential, use the
-:meth:`~gala.potential.potential.PotentialBase.to_galpy_potential()` method on
-any Gala potential object. For example:
+:meth:`~gala.potential.potential.PotentialBase.as_interop()` method on any Gala
+potential object with ``"galpy"``. For example:
 
 .. doctest-requires:: galpy
 
     >>> pot = gp.HernquistPotential(m=1e10 * u.Msun, c=1.5 * u.kpc, units=galactic)
-    >>> galpy_pot = pot.to_galpy_potential()
+    >>> galpy_pot = pot.as_interop("galpy")
     >>> galpy_pot  # doctest: +SKIP
     <galpy.potential.TwoPowerSphericalPotential.HernquistPotential at 0x7faa00263b20>
-    >>> galpy_pot.Rforce(1., 0.)  # doctest: +FLOAT_CMP
+    >>> float(galpy_pot.Rforce(1., 0.))  # doctest: +FLOAT_CMP
     -0.48737954713808573
 
 To convert from a Galpy potential to a Gala potential, use the
@@ -86,12 +52,28 @@ example:
     >>> galpy_pot = galpy_gp.HernquistPotential(amp=1., a=0.5)
     >>> pot = galpy_to_gala_potential(galpy_pot)
     >>> pot
-    <HernquistPotential: m=4.50e+10, c=4.00 (kpc,Myr,solMass,rad)>
+    <HernquistPotential: m=4.50e+10 solMass, c=4.00 kpc (kpc,Myr,solMass,rad)>
 
 
 Agama
 =====
 
-Coming soon, but we could use your help! Please leave a note `in this issue
-<https://github.com/adrn/gala/issues/230>`_ if you would find interoperability
-with Agama useful.
+`Agama <https://github.com/GalacticDynamics-Oxford/Agama>`_ is a library for
+modeling galaxies, with fast potential expansions and tools for distribution
+functions and actions. To convert a Gala potential to an Agama potential, use
+:meth:`~gala.potential.potential.PotentialBase.as_interop()` with ``"agama"``:
+
+.. doctest-requires:: agama
+
+    >>> pot = gp.HernquistPotential(m=1e10 * u.Msun, c=1.5 * u.kpc, units=galactic)
+    >>> agama_pot = pot.as_interop("agama")
+    >>> float(agama_pot.potential([1., 0, 0]))  # doctest: +FLOAT_CMP
+    -0.017994008608459656
+    >>> pot.energy([1., 0, 0] * u.kpc)  # doctest: +FLOAT_CMP
+    <Quantity [-0.01799401] kpc2 / Myr2>
+
+Note that this calls ``agama.setUnits()`` with the unit system of the Gala
+potential, which changes Agama's units globally.
+
+Gala can also load an Agama ``CylSpline`` potential export file with
+:meth:`~gala.potential.potential.CylSplinePotential.from_file()`.
