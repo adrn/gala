@@ -228,6 +228,8 @@ class Hamiltonian(CommonBase):
         Integrator_kwargs=dict(),
         cython_if_possible=True,
         save_all=True,
+        diffusion=None,
+        kick_seed=None,
         **time_spec
     ):
         """
@@ -256,6 +258,20 @@ class Hamiltonian(CommonBase):
             Controls whether to store the phase-space position at all intermediate
             timesteps. Set to False to store only the final values (i.e. the
             phase-space position(s) at the final timestep). Default is True.
+        diffusion : `~gala.dynamics.diffusion.DiffusionBase` (optional)
+            A diffusion model (e.g. `~gala.dynamics.diffusion.ConstantDiffusion`). If
+            given, a stochastic Euler-Maruyama kick ``dw = mu*dt + L*sqrt(dt)*xi`` is
+            applied to every orbit every ``diffusion.kick_every`` steps (``dt`` being
+            the interval since the last kick). Only supported with the C
+            `~gala.integrate.LeapfrogIntegrator` in a static frame, for forward
+            integration (``dt > 0``), and requires gala built with GSL.
+        kick_seed : int or sequence of int (optional)
+            Seed for the kick's random numbers. The same seed reproduces the same
+            noise; by default (``None``) every call draws fresh noise. The seed is
+            hashed with `numpy.random.SeedSequence`, but GSL's ``mt19937`` generator
+            keeps only 32 bits of it, so two different seeds give identical noise
+            with probability ~2^-32 per pair (around 50% for an ensemble of ~77,000
+            seeded realizations).
         **time_spec
             Specification of how long to integrate. Most commonly, this is a
             timestep ``dt`` and number of steps ``n_steps``, or a timestep
@@ -286,6 +302,34 @@ class Hamiltonian(CommonBase):
                 "Using a symplectic integrator with a non-static frame can "
                 "lead to wildly incorrect orbits. It is recommended that you "
                 "use DOPRI853Integrator instead.", RuntimeWarning)
+
+        # Optional stochastic diffusion kick (see gala.dynamics.diffusion). This is
+        # currently only supported by the Cython LeapfrogIntegrator (which itself
+        # requires a StaticFrame; GSL support is checked when the kick is built).
+        kick_capsule = None
+        if diffusion is not None:
+            if not (self.c_enabled and cython_if_possible):
+                raise NotImplementedError(
+                    "The `diffusion` option requires the C integration path "
+                    "(c_enabled and cython_if_possible=True)."
+                )
+            if Integrator is not LeapfrogIntegrator:
+                raise NotImplementedError(
+                    "The `diffusion` option is currently only supported with the "
+                    "LeapfrogIntegrator."
+                )
+            if diffusion.units is not None and any(
+                diffusion.units[k] != self.units[k] for k in ("length", "time")
+            ):
+                raise ValueError(
+                    "diffusion.units must have the same length and time units as "
+                    "the Hamiltonian's unit system."
+                )
+            # SeedSequence(None) draws fresh entropy; hashing avoids GSL's aliasing
+            # of small seeds (e.g. 0 and 4357). Note SeedSequence ignores trailing
+            # zeros, so kick_seed=s and (s, 0) give the same noise.
+            seed = np.random.SeedSequence(kick_seed).generate_state(1, np.uint64)[0]
+            kick_capsule = diffusion.kick_capsule(int(seed))
 
         if isinstance(w0, PhaseSpacePosition):
             ndim = w0.ndim
@@ -324,7 +368,7 @@ class Hamiltonian(CommonBase):
                 from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
 
                 t, w = leapfrog_integrate_hamiltonian(
-                    self, arr_w0, t, save_all=save_all
+                    self, arr_w0, t, save_all=save_all, kick_capsule=kick_capsule
                 )
 
             elif Integrator == Ruth4Integrator:

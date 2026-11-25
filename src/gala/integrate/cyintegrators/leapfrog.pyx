@@ -19,6 +19,13 @@ from ...potential.frame import StaticFrame
 from ...potential import NullPotential
 
 from libc.stdlib cimport malloc, free
+from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
+
+
+# Optional per-step "kick" (e.g. stochastic diffusion) applied at the synchronized
+# state. Delivered via a PyCapsule so no diffusion/GSL code is linked into this
+# extension; we only need the struct layout to call the function pointer.
+from ...dynamics.diffusion.diffusion_kick cimport DiffusionKick
 
 
 cdef void c_init_velocity(CPotential *p, size_t n, int half_ndim, double t, double dt,
@@ -52,10 +59,14 @@ cdef void c_leapfrog_step(CPotential *p, size_t n, int half_ndim, double t, doub
 
 
 cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1] t,
-                                     int save_all=1):
+                                     int save_all=1, kick_capsule=None):
     """
     w0: shape (ndim, n)
     returns: shape (ndim, [ntimes,] n)
+
+    If ``kick_capsule`` is given (a PyCapsule wrapping a ``DiffusionKick``), a
+    stochastic kick is applied to each orbit at the synchronized state every
+    ``DiffusionKick.every`` steps (see gala.dynamics.diffusion).
     """
 
     if not hamiltonian.c_enabled:
@@ -66,6 +77,9 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
             "Leapfrog integration is currently only supported for StaticFrame, "
             f"not {hamiltonian.frame.__class__.__name__}"
         )
+
+    if t.shape[0] < 2:
+        raise ValueError("Leapfrog integration needs at least two times.")
 
     cdef:
         # temporary scalars
@@ -85,8 +99,39 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         double[:, :, ::1] all_w
         double[:, ::1] tmp_w
 
+        # optional stochastic kick
+        DiffusionKick* dk = NULL
+        int j_last = 0
+        int moved
+        double kick_dt
+        double x_i[3]
+        double v_i[3]
+        double dx[3]
+        double dv[3]
+
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+
+    if kick_capsule is not None:
+        if not PyCapsule_IsValid(kick_capsule, "gala.DiffusionKick"):
+            raise TypeError("kick_capsule is not a valid gala.DiffusionKick capsule.")
+        if half_ndim != 3:
+            raise ValueError(
+                "Diffusion kicks are only supported for 3D phase space "
+                "(half_ndim == 3)."
+            )
+        if not dt > 0:
+            raise ValueError(
+                "The `diffusion` option only supports forward integration (dt > 0)."
+            )
+        # leapfrog steps with the first interval throughout, so the kick needs a
+        # uniform grid to get the right diffusion time
+        dts = np.diff(np.asarray(t))
+        if not (np.all(np.isfinite(dts)) and np.allclose(dts, dt, rtol=1e-6, atol=0)):
+            raise ValueError(
+                "The `diffusion` option needs a finite, uniformly spaced time grid."
+            )
+        dk = <DiffusionKick*>PyCapsule_GetPointer(kick_capsule, "gala.DiffusionKick")
 
     if save_all:
         all_w = np.empty((ndim, ntimes, n))
@@ -109,6 +154,33 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
                             &tmp_w[0, 0], &tmp_w[half_ndim, 0],
                             &v_jm1_2[0, 0],
                             &grad_v[0, 0])
+
+            if dk != NULL and (j - j_last == dk.every or j == ntimes - 1):
+                # apply the stochastic kick at the synchronized state (t[j]), every
+                # dk.every steps, covering the interval since the last kick (the final
+                # partial interval is kicked too). dv is added to both the
+                # synchronized velocity (tmp_w) and the half-step-ahead velocity
+                # (v_jm1_2) so it propagates. If any position moved, the half-step
+                # velocity is rebuilt from the gradient at the kicked positions.
+                kick_dt = (j - j_last) * dt
+                j_last = j
+                moved = 0
+                for i in range(n):
+                    for k in range(half_ndim):
+                        x_i[k] = tmp_w[k, i]
+                        v_i[k] = tmp_w[half_ndim + k, i]
+                    dk.kick(t[j], kick_dt, x_i, v_i, dx, dv, dk.state, dk.rng)
+                    for k in range(half_ndim):
+                        if dx[k] != 0.:
+                            moved = 1
+                        tmp_w[k, i] = tmp_w[k, i] + dx[k]
+                        tmp_w[half_ndim + k, i] = tmp_w[half_ndim + k, i] + dv[k]
+                        v_jm1_2[k, i] = v_jm1_2[k, i] + dv[k]
+                if moved:
+                    grad_v[:] = 0.
+                    c_init_velocity(cp, n, half_ndim, t[j], dt,
+                                    &tmp_w[0, 0], &tmp_w[half_ndim, 0],
+                                    &v_jm1_2[0, 0], &grad_v[0, 0])
 
             if save_all:
                 for k in range(ndim):
@@ -174,6 +246,9 @@ cpdef leapfrog_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
             "Leapfrog integration is currently only supported for StaticFrame, "
             f"not {hamiltonian.frame.__class__.__name__}"
         )
+
+    if t.shape[0] < 2:
+        raise ValueError("Leapfrog integration needs at least two times.")
 
     cdef:
         # temporary scalars
