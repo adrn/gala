@@ -23,6 +23,13 @@ New Features
 - ``fast_lyapunov_max()`` now accepts an ``rng`` argument (a ``numpy.random.Generator``)
   for the initial offset vectors, matching ``lyapunov_max()``.
 
+- Added stochastic diffusion to orbit integration. ``integrate_orbit()`` has new
+  ``diffusion`` and ``kick_seed`` arguments: a diffusion model from the new
+  ``gala.dynamics.diffusion`` subpackage (``ConstantDiffusion``, or
+  ``GriddedDiffusion`` for coefficients that vary over an ``(R, |z|)`` grid) applies an
+  Euler-Maruyama kick to positions and/or velocities during leapfrog integration
+  (requires GSL). See the new "Blurring a phase spiral" tutorial.
+
 
 Bug fixes
 ---------
@@ -75,6 +82,9 @@ Bug fixes
 - ``hessian()`` now raises ``NotImplementedError`` for a composite potential with a
   rotated component, instead of returning an incorrect result. It also works for a
   ``TimeInterpolatedPotential`` whose time-varying ``R`` is always the identity.
+
+- Leapfrog integration now raises an error for a time grid with fewer than two times,
+  instead of reading out of bounds.
 
 API changes
 -----------
