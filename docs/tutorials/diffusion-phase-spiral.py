@@ -1,13 +1,14 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
 #       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: gala
+#     display_name: gala (3.12.10)
 #     language: python
 #     name: python3
 # ---
@@ -19,20 +20,16 @@
 # %matplotlib inline
 
 # %% [markdown]
-# # Stochastic diffusion in orbit integrations: blurring a phase spiral
+# # Stochastic diffusion in orbit integrations
 #
-# Stars in galactic discs are continually nudged by fluctuations in the gravitational
-# potential: giant molecular clouds, the turbulent interstellar medium, dark-matter
-# substructure, and so on. Averaged over many such encounters, these perturbations act
-# as a *diffusion* of the stars' orbits. Gala can include this effect in an orbit
-# integration by applying a small random kick to every orbit at every step.
+# Stars in the galactic disk are subject to stochastic forces from fluctuations of the gravitational field. This can be from giant molecular clouds (or really ISM structure), passing stars, dark-matter substructure, etc. If the forces are random and averaged over many encounters, these perturbations act as a *diffusion* of the stars' orbits. Gala can include this effect in an orbit integration by applying small random kicks to orbits.
 #
 # In this tutorial we:
 #
 # 1. describe how the stochastic kick works and how to set it up,
-# 2. check it on a free particle, and
+# 2. demonstrate it on a particle in free-space, and
 # 3. use it to show how vertical diffusion blurs a "phase spiral" (the "Gaia snail")
-#    in the $(z, v_z)$ plane of the solar neighbourhood.
+#    in the vertical phase space.
 #
 # ### Notebook Setup and Package Imports
 
@@ -49,7 +46,7 @@ from gala.dynamics.diffusion import ConstantDiffusion
 from gala.units import galactic
 
 # %% [markdown]
-# ## How the kick works
+# ## Modeling stochastic diffusion
 #
 # A diffusion model specifies, at each phase-space point $\boldsymbol{w}$, a drift
 # vector $\boldsymbol{\mu}$ and a $6\times6$ diffusion tensor $\mathbf{D}$. After every
@@ -61,29 +58,29 @@ from gala.units import galactic
 # $$
 #
 # where $\boldsymbol{\xi}$ is a vector of independent standard normal draws. So the
-# covariance of the kicks grows as $\mathbf{D}\,t$. A few practical points:
+# covariance of the kicks grows as $\mathbf{D}\,t$. A few implementation details:
 #
-# - Diffusion is supported by the C leapfrog integrator, so pass a diffusion model to
-#   `integrate_orbit(..., diffusion=...)` (the default integrator for static potentials).
-# - `kick_seed` makes the noise reproducible. With the default (`None`) every call draws
-#   fresh noise.
-# - The coefficients are **plain numbers in the potential's unit system**. With
-#   `galactic` units, a velocity-diffusion entry is in $(\mathrm{kpc/Myr})^2/\mathrm{Myr}$.
-#   (The tensor mixes position and velocity units, so it can't be a single `Quantity`.)
-# - The coefficients can be given in Cartesian or cylindrical coordinates
-#   $(R, \phi, z, v_R, v_\phi, v_z)$, where the $\phi$ entry is the physical arc length
-#   $R\,\delta\phi$.
-# - `kick_every=k` applies the kick every $k$ steps (with the interval since the last
-#   kick as its timestep), which is cheaper when the coefficients vary slowly.
+# - Diffusion is supported by the C leapfrog integrator only.
+# - The random number draws are generated from a seed, specified with the `kick_seed`
+#   argument, so if you pass an explicit seed it will make the diffusion reproducible.
+# - The diffusion coefficients are specified as raw numbers in the potential's unit
+#   system. This is because the elements of the diffusion tensor have different units for
+#   the position and velocity terms. For example, with `galactic` units, a
+#   velocity-diffusion entry is in $(\mathrm{kpc/Myr})^2/\mathrm{Myr}$.
+# - The coefficients can be given in Cartesian or cylindrical coordinates $(R, \phi, z,
+#   v_R, v_\phi, v_z)$, where the $\phi$ entry is actually the physical arc length
+#   $R\,\delta\phi$. You probably want to use cylindrical coordinates for a disk galaxy because the tensor is more likely to be nearly constant.
+# - The kicks happen at regulary intervals. By default, every timestep - but this is very
+#   inefficient. You can safely set `kick_every=k` to apply the kick every $k$ steps,
+#   typically with $k \approx 10$--100.
 #
 # Here we use `ConstantDiffusion`, which has the same $\boldsymbol\mu$ and $\mathbf{D}$
-# everywhere. `GriddedDiffusion` interpolates them over a grid in $(R, |z|)$.
+# everywhere. You can also use the `GriddedDiffusion` class to interpolate the values over a grid in $(R, |z|)$.
 
 # %% [markdown]
-# ## A free-particle check
+# ## A particle diffusing in free space
 #
-# Start many particles at rest with no potential, and diffuse only $v_z$. The variance
-# of $v_z$ should then grow as $D_{v_zv_z}\,t$:
+# Here we start many particles at rest with no potential but finite diffusion coefficient in $v_z$. This is a simple test of the diffusion implementation: The variance of $v_z$ should grow as $D_{v_zv_z}\,t$:
 
 # %%
 N = 5000
@@ -119,19 +116,9 @@ ax.set(xlabel="$t$ [Myr]", ylabel=r"Var$(v_z)$ [(kpc/Myr)$^2$]")
 ax.legend()
 
 # %% [markdown]
-# ## A phase spiral in the solar neighbourhood
+# ## A phase spiral with diffusion
 #
-# A phase spiral forms when a population of disc stars is pushed out of vertical
-# equilibrium. Stars with larger vertical oscillations have lower vertical
-# frequencies, so the displaced population winds up into a spiral in $(z, v_z)$. Any
-# process that scatters the stars' vertical phases and amplitudes washes that spiral
-# out over time.
-#
-# We set up stars on nearly circular orbits with radii between 7.8 and 8.2 kpc in
-# the `MilkyWayPotential`. Their vertical motion is drawn in the epicyclic
-# (harmonic) approximation, with vertical actions $J_z$ exponentially distributed
-# (so the population is roughly isothermal with $\sigma_z \approx 15~\mathrm{km/s}$)
-# and uniform vertical phases.
+# A phase spiral forms when a population of stars is kicked simultaneously. The resulting distribution function then phase mixes to form a spiral. If the kick is predominantly vertical, the stars form a vertical phase spiral, like the one seen in Gaia data. Here we set up a population of stars on nearly circular orbits with radii between 7.8 and 8.2 kpc in the `MilkyWayPotential`. We draw their vertical initial conditions assuming the epicyclic (harmonic) approximation, with vertical actions $J_z$ exponentially distributed (so the population is roughly isothermal with $\sigma_z \approx 15~\mathrm{km/s}$) and uniform vertical phases.
 
 # %%
 pot = gp.MilkyWayPotential(version="v2", units=galactic)
@@ -149,12 +136,17 @@ theta_z = rng.uniform(0, 2 * np.pi, N)
 z0 = np.sqrt(2 * Jz / nu) * np.sin(theta_z)
 vz0 = np.sqrt(2 * nu * Jz) * np.cos(theta_z)
 
+w0_init = gd.PhaseSpacePosition(
+    pos=[R0 * np.cos(phi0), R0 * np.sin(phi0), z0] * u.kpc,
+    vel=[-vc * np.sin(phi0), vc * np.cos(phi0), vz0] * u.kpc / u.Myr,
+)
+_ = w0_init.plot(s=1.0, alpha=0.5)
+
 # %% [markdown]
-# Now we perturb the population by adding $15~\mathrm{km/s}$ to every star's $v_z$, as
-# a passing satellite might.
+# Now we perturb the population by adding $\Delta v_z = 10~\mathrm{km/s}$ to every star's vertical velocity $v_z$:
 
 # %%
-dvz = (15 * u.km / u.s).to_value(u.kpc / u.Myr)
+dvz = (10 * u.km / u.s).to_value(u.kpc / u.Myr)
 w0 = gd.PhaseSpacePosition(
     pos=[R0 * np.cos(phi0), R0 * np.sin(phi0), z0] * u.kpc,
     vel=[-vc * np.sin(phi0), vc * np.cos(phi0), vz0 + dvz] * u.kpc / u.Myr,
@@ -162,10 +154,8 @@ w0 = gd.PhaseSpacePosition(
 
 # %% [markdown]
 # We integrate the same initial conditions three times: with no diffusion, and with
-# weak and strong diffusion in $v_z$ only. The diffusion strengths below correspond
-# to a random walk in $v_z$ of about 1 and 3 km/s per 100 Myr. That's weak compared
-# with $\sigma_z$, but because neighbouring stars then phase-mix at different rates, its
-# effect on the spiral's fine structure grows much faster than the heating does.
+# weak, and strong diffusion in $v_z$ only. The diffusion strengths below correspond
+# to a random walk in $v_z$ of about 1 and 3 km/s per 100 Myr. This is small compared to the vertical velocity dispersion, but the phase spiral structure is relatively sensitive to small perturbations.
 #
 # We save only the snapshots we plot, by integrating between them with
 # `save_all=False`.
@@ -234,44 +224,6 @@ for ax in axes[:, 0]:
     ax.set_ylabel("$v_z$ [km/s]")
 
 # %% [markdown]
-# ## Checking the heating rate
+# As we can see, the diffusion can have a strong effect on the fine structure of the spiral, even though the heating is relatively small.
 #
-# Velocity diffusion also heats the population. For an Itô process with velocity
-# noise, the mean energy of an ensemble grows at a rate set only by the trace of the
-# velocity block of $\mathbf{D}$, in *any* potential:
-#
-# $$
-# \frac{\mathrm{d}\langle E \rangle}{\mathrm{d}t} = \frac{1}{2}\,
-# \mathrm{tr}\,\mathbf{D}_{vv} = \frac{1}{2} D_{v_z v_z}.
-# $$
-#
-# We can check that with the snapshots:
-
-
-# %%
-def energy(w):
-    return (w.potential_energy(pot) + w.kinetic_energy()).to_value(u.kpc**2 / u.Myr**2)
-
-
-fig, ax = plt.subplots(figsize=(5, 4))
-E0 = energy(w0)
-for name, color in zip(["weak diffusion", "strong diffusion"], ["C0", "C1"]):
-    dE = [np.mean(energy(w) - E0) for w in snapshots[name]]
-    # coefficients() evaluates a model's drift and tensor at given positions
-    _, D_model = runs[name].coefficients(w0[:1])
-    D_vz = D_model[0, 5, 5]
-    ax.plot(snap_times, dE, marker="o", ls="none", color=color, label=name)
-    ax.plot(snap_times, 0.5 * D_vz * np.array(snap_times), color=color)
-ax.set(xlabel="$t$ [Myr]", ylabel=r"$\langle E(t) - E(0) \rangle$ [(kpc/Myr)$^2$]")
-ax.legend()
-
-# %% [markdown]
-# The heating is modest: by 600 Myr the strong-diffusion run has gained the energy of
-# a random walk of about 7 km/s in $v_z$, less than half of $\sigma_z$. Yet the spiral
-# is already badly blurred, because the scatter in vertical *phase* is amplified by
-# phase mixing: it grows as
-# $D\,t^3$ rather than $D\,t$. Phase spirals are therefore sensitive probes of
-# small-scale perturbations to disc orbits.
-#
-# Here the diffusion is the same everywhere and only affects $v_z$. More realistic
-# models, whose diffusion depends on the orbit, are coming in a later release of Gala.
+# This is a toy example in which the diffusion is constant and only acts in $v_z$. In reality, the diffusion is more complicated (see, e.g., Modak et al. 2026).
