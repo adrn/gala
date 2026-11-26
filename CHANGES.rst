@@ -51,6 +51,12 @@ Bug fixes
   ``minimize_kwargs`` dictionary passed in, and ``fit_harmonic_oscillator()`` no
   longer overrides a user-supplied ``x0``.
 
+- Fixed ``get_staeckel_fudge_delta()`` to honor ``median=False`` for orbits and
+  retain all batch dimensions for phase-space positions. As a result,
+  ``find_actions_staeckel_fudge()`` on a multi-dimensional ``PhaseSpacePosition``
+  now uses a separate Δ for each position instead of the median along the first
+  axis.
+
 - Fixed potential and Hamiltonian gradients evaluated with one time per position
   (``t`` an array), which used the wrong coordinates whenever more than one position
   was passed.
