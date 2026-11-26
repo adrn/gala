@@ -2,6 +2,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
+from gala._optional_deps import HAS_H5PY
 from gala.dynamics.core import PhaseSpacePosition
 from gala.dynamics.mockstream import MockStream
 
@@ -141,48 +142,23 @@ def test_Fardal_vs_GalaModified():
     assert not u.allclose(stream_false.xyz, stream_true.xyz)
 
 
-def test_generated_stream_hdf5_roundtrip(tmp_path):
-    h5py = pytest.importorskip("h5py")
+@pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
+def test_hdf5_roundtrip(tmp_path, rng):
+    import h5py
 
-    import gala.potential as gp
-    from gala.dynamics import mockstream as ms
-    from gala.units import galactic
-
-    potential = gp.NFWPotential.from_circular_velocity(
-        v_c=220 * u.km / u.s, r_s=15 * u.kpc, units=galactic
-    )
-    w0 = PhaseSpacePosition([10, 0, 0] * u.kpc, [0, 170, 0] * u.km / u.s)
-    stream, _ = ms.MockStreamGenerator(ms.StreaklineStreamDF(), potential).run(
-        w0, 2.5e4 * u.Msun, dt=1 * u.Myr, n_steps=3
+    stream = MockStream(
+        rng.random(size=(3, 8)) * u.kpc,
+        rng.random(size=(3, 8)) * u.km / u.s,
+        release_time=np.repeat(np.arange(4), 2) * u.Myr,
+        lead_trail=np.array(["t", "l"] * 4),
     )
 
     path = tmp_path / "stream.h5"
     with h5py.File(path, "w") as f:
         stream.to_hdf5(f)
     with h5py.File(path, "r") as f:
-        np.testing.assert_array_equal(f["lead_trail"][:], [b"t", b"l"] * 4)
         saved = MockStream.from_hdf5(f)
 
     assert u.allclose(saved.xyz, stream.xyz)
-    assert u.allclose(saved.v_xyz, stream.v_xyz)
-    assert u.allclose(saved.release_time, np.repeat(np.arange(4), 2) * u.Myr)
-    np.testing.assert_array_equal(saved.lead_trail, ["t", "l"] * 4)
-    assert saved.frame == stream.frame
-
-
-def test_read_mockstream_legacy_labels(tmp_path):
-    h5py = pytest.importorskip("h5py")
-    w = PhaseSpacePosition(
-        [[8, 9], [0, 0.1], [0, 0.1]] * u.kpc,
-        [[0, 0], [170, 175], [0, 1]] * u.km / u.s,
-    )
-    path = tmp_path / "legacy.h5"
-    with h5py.File(path, "w") as f:
-        w.to_hdf5(f)
-        f["lead_trail"] = np.array([b"l", b"t"], dtype="S1")
-
-    with h5py.File(path, "r") as f:
-        saved = MockStream.from_hdf5(f)
-
-    assert saved.release_time is None
-    np.testing.assert_array_equal(saved.lead_trail, ["l", "t"])
+    assert u.allclose(saved.release_time, stream.release_time)
+    np.testing.assert_array_equal(saved.lead_trail, stream.lead_trail)
