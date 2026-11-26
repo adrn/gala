@@ -89,6 +89,10 @@ Bug fixes
 - Fixed ``LogarithmicPotential.density()``, ``hessian()``, and ``to_sympy()``, which
   ignored the rotation angle ``phi``.
 
+- Fixed ``SCFPotential`` returning NaN for the gradient on the z axis and for the
+  energy and gradient at the origin. At the origin, the gradient is the symmetric
+  limit, because the ``l=0`` basis functions are cusped there.
+
 API changes
 -----------
 

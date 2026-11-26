@@ -72,7 +72,8 @@ void scf_potential_helper(double *xyz, int K,
         j = 3*k;
         r = sqrt(xyz[j]*xyz[j] + xyz[j+1]*xyz[j+1] + xyz[j+2]*xyz[j+2]);
         s = r/r_s;
-        X = xyz[j+2]/r; // cos(theta)
+        // At the origin only l = 0 terms are nonzero, so any finite X works
+        X = (r == 0) ? 1. : xyz[j+2]/r; // cos(theta)
         phi = atan2(xyz[j+1], xyz[j+0]);
 
         // HACK: zero out before filling;
@@ -128,7 +129,8 @@ void scf_gradient_helper(double *__restrict__ x, double *__restrict__ y, double 
     for (k=0; k<K; k++) {
         r = sqrt(x[k] * x[k] + y[k] * y[k] + z[k] * z[k]);
         s = r/r_s;
-        X = z[k]/r; // cos(theta)
+        // At the origin, take the s -> 0 limit along theta = 0 (see sph_grad_phi_nlm)
+        X = (r == 0) ? 1. : z[k]/r; // cos(theta)
         phi = atan2(y[k], x[k]);
 
         sintheta = sqrt(1 - X*X);
@@ -164,10 +166,16 @@ void scf_gradient_helper(double *__restrict__ x, double *__restrict__ y, double 
                         continue;
                     }
 
+                    // The l = 0 terms are cusped at the origin: use the symmetric
+                    // limit, 0
+                    if ((r == 0) && (l == 0)) {
+                        continue;
+                    }
+
                     sph_grad_phi_nlm(s, phi, X, n, l, m, lmax, &tmp_grad[0]);
                     tmp_grad2[0] += tmp_grad[0] * tmp; // r
                     tmp_grad2[1] += tmp_grad[1] * tmp; // theta
-                    tmp_grad2[2] += tmp_grad[2] * (Tnlm[i]*cosmphi[m] - Snlm[i]*sinmphi[m]) / (s*sintheta); // phi
+                    tmp_grad2[2] += tmp_grad[2] * (Tnlm[i]*cosmphi[m] - Snlm[i]*sinmphi[m]); // phi
 
                     // i++;
                 }
