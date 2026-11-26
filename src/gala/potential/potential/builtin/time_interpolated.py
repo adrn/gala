@@ -21,7 +21,6 @@ _unsupported_cls = [
     "HenonHeilesPotential",
     "NullPotential",
     "MultipolePotential",  # TODO?
-    "SphericalSplinePotential",  # TODO
     "CylSplinePotential",  # TODO
 ]
 
@@ -218,6 +217,18 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
                 # increase ndim for validation
                 self._parameters[param_name].ndim += 1
 
+        # SphericalSplinePotential precomputes its splines once (C state), so only the
+        # origin/rotation can vary in time. NOTE: its `interpolation_method` parameter
+        # shares a name with ours, so one value sets both.
+        if (
+            _potential_cls.__name__ == "SphericalSplinePotential"
+            and self._interp_params
+        ):
+            raise NotImplementedError(
+                "TimeInterpolatedPotential only supports a time-varying origin or "
+                "rotation for SphericalSplinePotential, not time-varying parameters."
+            )
+
         # # Validate rotation matrices are orthogonal
         # for i, rot_matrix in enumerate(rotation_matrices):
         #     if not self._is_orthogonal(rot_matrix):
@@ -340,10 +351,13 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
 
         # Calculate how many c_only parameters exist (e.g., nmax, lmax for SCF)
         # These are prepended to c_parameters but not in the regular parameters dict
-        # TODO: need to detect potential parameters that aren't array type, like
-        # SphericalSplinePotential's spline_value_type
+        numeric_param_names = [
+            k
+            for k in self._potential_param_names
+            if not isinstance(wrapped_potential.parameters[k], str)
+        ]
         total_regular_param_size = 0
-        for k in self._potential_param_names:
+        for k in numeric_param_names:
             param_val = np.atleast_1d(wrapped_potential.parameters[k].value)
             total_regular_param_size += param_val.size
 
@@ -355,7 +369,7 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         else:
             c_only_params = np.array([])
 
-        for k in self._potential_param_names:
+        for k in numeric_param_names:
             param_val = np.atleast_1d(self.parameters[k].value)
 
             # If this is a time-interpolated multi-dimensional parameter,
