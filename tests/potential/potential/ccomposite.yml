@@ -3,10 +3,9 @@ class: CCompositePotential
 components:
   - class: KeplerPotential
     name: halo
-    parameters: !!python/object/apply:collections.OrderedDict
-      dictitems:
-        m: 100000000000.0
-        m_unit: ""
+    parameters:
+      m: 100000000000.0
+      m_unit: ""
     units:
       angle: rad
       angular speed: mas / yr
@@ -16,12 +15,11 @@ components:
       time: Myr
   - class: IsochronePotential
     name: bulge
-    parameters: !!python/object/apply:collections.OrderedDict
-      dictitems:
-        b: 0.76
-        b_unit: ""
-        m: 100000000000.0
-        m_unit: ""
+    parameters:
+      b: 0.76
+      b_unit: ""
+      m: 100000000000.0
+      m_unit: ""
     units:
       angle: rad
       angular speed: mas / yr

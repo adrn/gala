@@ -164,35 +164,113 @@ def from_dict(d, module=None):
 # ----------------------------------------------------------------------------
 
 
-def _pack_params(p):
-    params = p.copy()
-    for key, item in p.items():
-        if hasattr(item, "unit"):
-            params[key] = item.value
-            params[key + "_unit"] = str(item.unit)
+def _to_plain_str(value):
+    """Normalize a string, str subclass, or non-string object to exact builtin str."""
+    if type(value) is str:
+        return value
+    if isinstance(value, str):
+        return str.__str__(value)
+    return str.__str__(str(value))
 
-        if hasattr(params[key], "tolist"):  # convert array to list
-            params[key] = params[key].tolist()
+
+def _to_yaml_safe(value):
+    """Normalize NumPy and builtin scalar/container subclasses for yaml.safe_dump."""
+    if value is None or type(value) in (str, int, float, bool, bytes):
+        return value
+    if hasattr(value, "unit"):
+        # Do not silently strip units from an unexpected Quantity; let
+        # yaml.safe_dump fail fast instead of dropping physical units.
+        return value
+    if isinstance(value, np.generic):
+        value = value.item()
+    elif isinstance(value, np.ndarray):
+        return _to_yaml_safe(value.tolist())
+
+    if isinstance(value, bool):
+        return bool(value)
+    if isinstance(value, int):
+        return int(value)
+    if isinstance(value, float):
+        return float(value)
+    if isinstance(value, str):
+        return str.__str__(value)
+    if isinstance(value, bytes):
+        return bytes(value)
+    if isinstance(value, (list, tuple)):
+        return [_to_yaml_safe(v) for v in value]
+    if isinstance(value, dict):
+        out = {}
+        for k, v in value.items():
+            key = _to_yaml_safe(k)
+            if key in out:
+                raise ValueError(
+                    f"Duplicate key {key!r} after YAML serialization normalization"
+                )
+            out[key] = _to_yaml_safe(v)
+        return out
+    return value
+
+
+def _pack_params(p):
+    params = {}
+    for key, item in p.items():
+        key_str = _to_plain_str(key)
+        if key_str in params:
+            raise ValueError(
+                f"Duplicate parameter key {key_str!r} after YAML serialization "
+                "normalization"
+            )
+        if hasattr(item, "unit"):
+            unit_key = key_str + "_unit"
+            if unit_key in params:
+                raise ValueError(
+                    f"Duplicate parameter key {unit_key!r} after YAML serialization "
+                    "normalization"
+                )
+            params[key_str] = _to_yaml_safe(item.value)
+            params[unit_key] = _to_plain_str(item.unit)
+        else:
+            params[key_str] = _to_yaml_safe(item)
 
     return params
+
+
+def _pack_extra_args(potential):
+    extra_args = {}
+    for arg in potential._extra_serialize_args:
+        arg_str = _to_plain_str(arg)
+        if arg_str in extra_args:
+            raise ValueError(
+                f"Duplicate extra_args key {arg_str!r} after YAML serialization "
+                "normalization"
+            )
+        extra_args[arg_str] = _to_yaml_safe(getattr(potential, arg))
+    return extra_args
 
 
 def _to_dict_help(potential):
     d = {}
 
-    d["class"] = potential.__class__.__name__
+    d["class"] = _to_plain_str(potential.__class__.__name__)
 
     if not isinstance(potential.units, DimensionlessUnitSystem):
-        d["units"] = {str(k): str(v) for k, v in potential.units.to_dict().items()}
+        units = {}
+        for k, v in potential.units.to_dict().items():
+            key_str = _to_plain_str(k)
+            if key_str in units:
+                raise ValueError(
+                    f"Duplicate unit key {key_str!r} after YAML serialization "
+                    "normalization"
+                )
+            units[key_str] = _to_plain_str(v)
+        d["units"] = units
 
     if len(potential.parameters) > 0:
         params = _pack_params(potential.parameters)
         d["parameters"] = params
 
     if potential._extra_serialize_args:
-        d["extra_args"] = {}
-        for arg in potential._extra_serialize_args:
-            d["extra_args"][arg] = getattr(potential, arg)
+        d["extra_args"] = _pack_extra_args(potential)
 
     return d
 
@@ -240,16 +318,22 @@ def to_dict(potential):
 
     if isinstance(potential, gp.CompositePotential):
         d = {}
-        d["class"] = potential.__class__.__name__
+        d["class"] = _to_plain_str(potential.__class__.__name__)
         if potential._extra_serialize_args:
-            d["extra_args"] = {}
-            for arg in potential._extra_serialize_args:
-                d["extra_args"][arg] = getattr(potential, arg)
+            d["extra_args"] = _pack_extra_args(potential)
 
         d["components"] = []
+        seen_names = set()
         for k, p in potential.items():
+            name = _to_plain_str(k)
+            if name in seen_names:
+                raise ValueError(
+                    f"Duplicate component name {name!r} after YAML serialization "
+                    "normalization"
+                )
+            seen_names.add(name)
             comp_dict = _to_dict_help(p)
-            comp_dict["name"] = k
+            comp_dict["name"] = name
             d["components"].append(comp_dict)
 
         if potential.__class__.__name__ in {
@@ -314,10 +398,10 @@ def load(f, module=None):
     from_dict : Create potential from dictionary specification.
     """
     if hasattr(f, "read"):
-        p_dict = yaml.load(f.read(), Loader=yaml.Loader)
+        p_dict = yaml.safe_load(f.read())
     else:
         with open(os.path.abspath(f), encoding="utf-8") as fil:
-            p_dict = yaml.load(fil.read(), Loader=yaml.Loader)
+            p_dict = yaml.safe_load(fil.read())
 
     return from_dict(p_dict, module=module)
 
@@ -360,7 +444,7 @@ def save(potential, f):
     d = to_dict(potential)
 
     if hasattr(f, "write"):
-        yaml.dump(d, f, default_flow_style=None)
+        yaml.safe_dump(d, f, default_flow_style=None)
     else:
         with open(f, "w", encoding="utf-8") as f2:
-            yaml.dump(d, f2, default_flow_style=None)
+            yaml.safe_dump(d, f2, default_flow_style=None)
