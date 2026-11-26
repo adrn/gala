@@ -282,7 +282,7 @@ def lyapunov_max(
 
         total_steps_taken += n_steps_per_pullback
 
-    LEs = np.array([LEs[:ii].sum(axis=0) / ts[ii - 1] for ii in range(1, niter)])
+    LEs = np.array([LEs[:ii].sum(axis=0) / (ts[ii - 1] - t1) for ii in range(1, niter)])
 
     try:
         t_unit = units["time"]

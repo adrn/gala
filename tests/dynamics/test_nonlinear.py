@@ -351,3 +351,24 @@ def test_fast_lyapunov_time_grid_and_origin():
     np.testing.assert_allclose(shifted.value, base.value, rtol=1e-7, atol=1e-10)
     np.testing.assert_allclose(run(100, False).value, shifted.value)
     np.testing.assert_allclose(run(0, False).value, base.value)
+
+
+def test_lyapunov_max_origin():
+    H = gp.Hamiltonian(gp.NFWPotential(m=1e12, r_s=15, units=galactic))
+    integrator = DOPRI853Integrator(
+        lambda t, w: H._gradient(np.ascontiguousarray(w), np.array([t]))
+    )
+
+    def run(t1):
+        LEs, _ = lyapunov_max(
+            [10, 0, 0.5, 0, 0.17, 0.01],
+            integrator,
+            dt=0.5,
+            n_steps=40,
+            t1=t1,
+            units=galactic,
+            rng=np.random.default_rng(42),
+        )
+        return LEs.value
+
+    np.testing.assert_allclose(run(100), run(0), rtol=1e-7)

@@ -37,9 +37,6 @@ Bug fixes
 - Fixed ``TimeInterpolatedPotential`` returning zero energy, gradient, and density
   after being pickled or deep-copied.
 
-- Fixed ``fast_lyapunov_max()`` to integrate at the requested timesteps and
-  normalize exponent estimates by the elapsed time.
-
 - Fixed ``find_actions_o2gf()`` raising an error whenever any toy action or angle
   was NaN. NaN samples are now dropped with a warning, and it raises only if more
   than half of the samples are NaN.
@@ -98,6 +95,12 @@ Bug fixes
 - Fixed ``SCFPotential`` returning NaN for the gradient on the z axis and for the
   energy and gradient at the origin. At the origin, the gradient is the symmetric
   limit, because the ``l=0`` basis functions are cusped there.
+
+- Fixed ``fast_lyapunov_max()`` to integrate at the requested timesteps, and
+  ``fast_lyapunov_max()`` and ``lyapunov_max()`` to normalize exponent estimates by
+  the elapsed time instead of the absolute time. Results now no longer depend on
+  ``t1``, and ``fast_lyapunov_max()`` estimates with ``t1=0`` change slightly
+  (by roughly ``1 / n_steps``).
 
 API changes
 -----------
