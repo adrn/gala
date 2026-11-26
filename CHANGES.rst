@@ -146,6 +146,9 @@ Other
 - Reduced ``find_actions_o2gf()`` runtime by reusing mode projections and using
   matrix products.
 
+- Improve performance of repeated gradient computations with transformed components by
+  allocating persistent scratch space.
+
 1.12.0 (2026-09-27)
 ===================
 
