@@ -99,6 +99,12 @@ Bug fixes
   energy and gradient at the origin. At the origin, the gradient is the symmetric
   limit, because the ``l=0`` basis functions are cusped there.
 
+- Fixed ``fast_lyapunov_max()`` to integrate at the requested timesteps, and
+  ``fast_lyapunov_max()`` and ``lyapunov_max()`` to normalize exponent estimates by
+  the elapsed time instead of the absolute time. Results now no longer depend on
+  ``t1``, and ``fast_lyapunov_max()`` estimates with ``t1=0`` change slightly
+  (by roughly ``1 / n_steps``).
+
 API changes
 -----------
 
