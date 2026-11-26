@@ -47,6 +47,9 @@ Bug fixes
 - ``find_actions_o2gf()`` no longer warns "More unknowns than equations!" on every
   call, and no longer emits each angle-sampling warning twice.
 
+- Fixed ``find_actions_o2gf()`` frequencies when the orbit's times are expressed
+  in a different unit from the toy potential's time unit.
+
 - ``fit_isochrone()`` and ``fit_harmonic_oscillator()`` no longer modify the
   ``minimize_kwargs`` dictionary passed in, and ``fit_harmonic_oscillator()`` no
   longer overrides a user-supplied ``x0``.
