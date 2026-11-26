@@ -10,7 +10,7 @@ import astropy.table as at
 import astropy.units as u
 import numpy as np
 from astropy.constants import G
-from scipy.linalg import eigvalsh, solve
+from scipy.linalg import solve
 from scipy.optimize import brentq, minimize
 
 from gala.logging import logger
@@ -454,20 +454,6 @@ def check_angle_sampling(nvecs, angles):
     return np.array(failed_nvecs), np.array(failures)
 
 
-def _normal_matrix_well_conditioned(matrix):
-    # Remove column scale (especially the value of the time unit) from
-    # the conditioning check. The eigenvalues are squared singular values
-    # of the scaled design matrix.
-    diagonal = matrix.diagonal()
-    if np.any(diagonal <= 0) or not np.all(np.isfinite(matrix)):
-        return False
-    scale = np.sqrt(diagonal)
-    scaled = matrix / scale[:, None] / scale
-    smallest = eigvalsh(scaled, subset_by_index=[0, 0], check_finite=False)[0]
-    threshold = np.sqrt(np.finfo(matrix.dtype).eps) * np.linalg.norm(scaled, np.inf)
-    return smallest > threshold
-
-
 def _action_prepare(aa, N_max, dx, dy, dz, sign=1.0, throw_out_modes=False):
     """
     Given toy actions and angles, `aa`, compute the matrix `A` and
@@ -524,11 +510,7 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1.0, throw_out_modes=False):
     A[3:, :3] = C_T.T
 
     # lower right block matrix: C_nk dotted with C_nk^T
-    modes_dot = 4.0 * np.dot(nvecs, nvecs.T)
-    A[3:, 3:] = modes_dot * (cosv @ cosv.T)
-    # Preserve the original summation for fits sensitive to round-off.
-    if not _normal_matrix_well_conditioned(A):
-        A[3:, 3:] = modes_dot * np.einsum("it, jt->ij", cosv, cosv)
+    A[3:, 3:] = 4.0 * np.dot(nvecs, nvecs.T) * (cosv @ cosv.T)
 
     # b vector first three is just sum of toy actions
     b[:3] = np.sum(actions, axis=1)
@@ -618,14 +600,6 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.0, nvecs=None):
 
     # top rectangle
     A[:6, :] = A[:, :6].T
-
-    # The same block occurs once per angle, so check only the first.
-    block = np.r_[0, 3, 6 : 6 + nv]
-    if not _normal_matrix_well_conditioned(A[np.ix_(block, block)]):
-        SdotST = np.einsum("it, jt->ij", sinv, sinv)
-        for j in range(3):
-            modes = slice(6 + j * nv, 6 + (j + 1) * nv)
-            A[modes, modes] = 4 * SdotST
 
     b[:3] = np.sum(angles.T, axis=0)
     b[3:6] = np.sum(t[:, None] * angles.T, axis=0)

@@ -126,7 +126,7 @@ Other
 -----
 
 - Reduced ``find_actions_o2gf()`` runtime by reusing mode projections and using
-  matrix products for well-conditioned normal equations.
+  matrix products.
 
 1.12.0 (2026-09-27)
 ===================
