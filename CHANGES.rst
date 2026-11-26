@@ -114,6 +114,9 @@ Bug fixes
   ``t1``, and ``fast_lyapunov_max()`` estimates with ``t1=0`` change slightly
   (by roughly ``1 / n_steps``).
 
+- Fixed the final sample of DOP853 dense orbit output when rounding places
+  the last interpolation interval just short of the requested final time.
+
 API changes
 -----------
 
