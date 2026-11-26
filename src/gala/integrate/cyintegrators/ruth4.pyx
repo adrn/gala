@@ -33,6 +33,7 @@ cdef void c_ruth4_step(CPotential *p, size_t n, int half_ndim, double t, double 
             for i in range(n):
                 w[(half_ndim + k) * n + i] = w[(half_ndim + k) * n + i] - ds[j] * grad[k * n + i] * dt
                 w[k * n + i] = w[k * n + i] + cs[j] * w[(half_ndim + k) * n + i] * dt
+        t += cs[j] * dt
 
 cpdef ruth4_integrate_hamiltonian(hamiltonian,
                                   double[:, ::1] w0,
@@ -98,7 +99,7 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
     with nogil:
         for j in range(1, ntimes, 1):
             grad[:] = 0.
-            c_ruth4_step(cp, n, half_ndim, t[j], dt,
+            c_ruth4_step(cp, n, half_ndim, t[j - 1], dt,
                         &cs[0], &ds[0],
                         &tmp_w[0, 0], &grad[0, 0])
 
@@ -135,6 +136,7 @@ cdef void c_ruth4_step_nbody(
         for k in range(half_ndim):
             w[half_ndim + k] = w[half_ndim + k] - ds[j] * grad[k] * dt
             w[k] = w[k] + cs[j] * w[half_ndim + k] * dt
+        t += cs[j] * dt
 
 cpdef ruth4_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
                             list particle_potentials, int save_all=1):
@@ -218,7 +220,7 @@ cpdef ruth4_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
             for j in range(1, ntimes, 1):
                 for i in range(n):
                     c_ruth4_step_nbody(
-                        cp, half_ndim, t[j], dt,
+                        cp, half_ndim, t[j - 1], dt,
                         c_particle_potentials, &tmp_w[0, 0], nbody, i,
                         &cs[0], &ds[0],
                         &tmp_w[i, 0], &grad[0]

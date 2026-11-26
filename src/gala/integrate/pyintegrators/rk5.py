@@ -185,7 +185,7 @@ class RK5Integrator(Integrator):
         w = w0.copy()
         range_ = self._get_range_func()
         for ii in range_(1, n_steps + 1):
-            w = self.step(times[ii], w, dt)
+            w = self.step(times[ii - 1], w, dt)
 
             if self.save_all:
                 ws[:, ii] = w

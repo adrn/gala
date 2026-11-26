@@ -117,6 +117,10 @@ Bug fixes
 - Fixed the final sample of DOP853 dense orbit output when rounding places
   the last interpolation interval just short of the requested final time.
 
+- Fixed the force evaluation times in ``Ruth4Integrator`` (Python and Cython,
+  including N-body integration) and ``RK5Integrator``, improving accuracy for
+  time-dependent potentials.
+
 API changes
 -----------
 
