@@ -2,6 +2,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
+from gala._optional_deps import HAS_H5PY
 from gala.dynamics.core import PhaseSpacePosition
 from gala.dynamics.mockstream import MockStream
 
@@ -139,3 +140,25 @@ def test_Fardal_vs_GalaModified():
     stream_true, _ = gen_true.run(prog_w0, prog_mass, dt=1, n_steps=128, progress=False)
 
     assert not u.allclose(stream_false.xyz, stream_true.xyz)
+
+
+@pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
+def test_hdf5_roundtrip(tmp_path, rng):
+    import h5py
+
+    stream = MockStream(
+        rng.random(size=(3, 8)) * u.kpc,
+        rng.random(size=(3, 8)) * u.km / u.s,
+        release_time=np.repeat(np.arange(4), 2) * u.Myr,
+        lead_trail=np.array(["t", "l"] * 4),
+    )
+
+    path = tmp_path / "stream.h5"
+    with h5py.File(path, "w") as f:
+        stream.to_hdf5(f)
+    with h5py.File(path, "r") as f:
+        saved = MockStream.from_hdf5(f)
+
+    assert u.allclose(saved.xyz, stream.xyz)
+    assert u.allclose(saved.release_time, stream.release_time)
+    np.testing.assert_array_equal(saved.lead_trail, stream.lead_trail)
