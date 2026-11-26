@@ -21,6 +21,7 @@ from gala.potential import (
     StaticFrame,
 )
 from gala.units import galactic, solarsystem
+from gala.util import GalaDeprecationWarning
 
 
 # Tests below should be cleaned up a bit...
@@ -658,10 +659,11 @@ def test_io(tmpdir, obj):
 )
 @pytest.mark.skipif(not HAS_GALPY, reason="requires galpy to run this test")
 def test_orbit_to_galpy(obj):
-    o1 = obj.to_galpy_orbit()
-    o2 = obj.to_galpy_orbit(ro=8 * u.kpc)
-    o3 = obj.to_galpy_orbit(vo=220 * u.km / u.s)
-    o4 = obj.to_galpy_orbit(ro=8 * u.kpc, vo=220 * u.km / u.s)
+    with pytest.warns(GalaDeprecationWarning):  # noqa: PT031
+        obj.to_galpy_orbit()
+        obj.to_galpy_orbit(ro=8 * u.kpc)
+        obj.to_galpy_orbit(vo=220 * u.km / u.s)
+        obj.to_galpy_orbit(ro=8 * u.kpc, vo=220 * u.km / u.s)
 
 
 @pytest.mark.skipif(not HAS_GALPY, reason="requires galpy to run this test")
@@ -673,6 +675,7 @@ def test_orbit_from_galpy():
     galpy_orbit = galpy_o.Orbit([1.0, 0.1, 1.1, 0.0, 0.1, 1.0])
     ts = np.linspace(0, 100, 10000)
     galpy_orbit.integrate(ts, mp, method="odeint")
-    gala_orbit = Orbit.from_galpy_orbit(galpy_orbit)
+    with pytest.warns(GalaDeprecationWarning):
+        gala_orbit = Orbit.from_galpy_orbit(galpy_orbit)
 
     assert len(gala_orbit.t) == len(ts)

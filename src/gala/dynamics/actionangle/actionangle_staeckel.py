@@ -188,7 +188,7 @@ def get_staeckel_fudge_delta(potential, w, median=True):
     delta = np.sqrt(a2_c2)
 
     # Median over time if the inputs were orbits
-    if (len(delta.shape) > 1 and median) or isinstance(w, Orbit):
+    if isinstance(w, Orbit) and median:
         delta = np.nanmedian(delta, axis=0)
 
     return delta * potential.units["length"]

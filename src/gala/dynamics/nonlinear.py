@@ -50,7 +50,7 @@ def fast_lyapunov_max(
     noffset_orbits : int, optional
         Number of offset orbits to use. Default is 2.
     t1 : float, optional
-        Initial time. Default is 0.0.
+        Initial time. The integration ends at ``t1 + n_steps * dt``. Default is 0.0.
     atol : float, optional
         Absolute tolerance for the integrator. Default is 1e-10.
     rtol : float, optional
@@ -282,7 +282,7 @@ def lyapunov_max(
 
         total_steps_taken += n_steps_per_pullback
 
-    LEs = np.array([LEs[:ii].sum(axis=0) / ts[ii - 1] for ii in range(1, niter)])
+    LEs = np.array([LEs[:ii].sum(axis=0) / (ts[ii - 1] - t1) for ii in range(1, niter)])
 
     try:
         t_unit = units["time"]

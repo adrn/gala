@@ -57,6 +57,43 @@ def test_hernquist():
     np.testing.assert_allclose(bfe_grad, true_grad)
 
 
+def _random_scf_potential():
+    rng = np.random.default_rng(298)
+    shape = (4, 4, 4)  # nmax = lmax = 3
+    Snlm = rng.uniform(-0.2, 0.2, shape)
+    Tnlm = rng.uniform(-0.2, 0.2, shape)
+    Snlm[0, 0, 0] = 1.0
+    Tnlm[:, :, 0] = 0.0
+    return gp.SCFPotential(m=1.0, r_s=1.0, Snlm=Snlm, Tnlm=Tnlm, units=None)
+
+
+@pytest.mark.parametrize("z", [0.7, -1.3])
+def test_gradient_on_z_axis(z):
+    """gala#298: the gradient on the z axis (sin(theta) = 0) is the off-axis limit."""
+    pot = _random_scf_potential()
+    eps = 1e-7
+    grad = pot.gradient([0.0, 0.0, z]).value
+    for xy in ([eps, 0], [0, eps], [-eps, -eps]):
+        np.testing.assert_allclose(grad, pot.gradient([*xy, z]).value, atol=1e-6)
+
+
+def test_origin():
+    """gala#298: energy and gradient at r = 0 are finite. The l=0 terms are cusped at
+    the origin, so the gradient there is the symmetric limit."""
+    pot = _random_scf_potential()
+    eps = 1e-7
+    origin = np.zeros(3)
+
+    np.testing.assert_allclose(
+        pot.energy(origin).value, pot.energy([eps, 0, 0]).value, rtol=1e-5
+    )
+
+    grad = pot.gradient(origin).value
+    for e in np.eye(3):
+        avg = 0.5 * (pot.gradient(eps * e).value + pot.gradient(-eps * e).value)
+        np.testing.assert_allclose(grad, avg, rtol=1e-5)
+
+
 class TestSCFPotential(PotentialTestBase):
     nmax = 6
     lmax = 2

@@ -53,3 +53,23 @@ def test_integrate_eccentric_orbit(
     potential.integrate_orbit(
         eccentric_w0, dt=1 * u.Myr, n_steps=n_steps, Integrator=Integrator
     )
+
+
+@pytest.fixture
+def shifted_potential():
+    # A nonzero origin sends gradients through the shift/rotate path
+    return gp.HernquistPotential(
+        m=1e11, c=5, units="galactic", origin=[0.1, 0, 0] * u.kpc
+    )
+
+
+@pytest.mark.benchmark
+@pytest.mark.parametrize("Integrator", ["dop853", "leapfrog"])
+@pytest.mark.parametrize("n_steps", [10_000])
+@pytest.mark.parametrize("n_orbits", [1, 100])
+def test_integrate_shifted_potential(
+    shifted_potential, circular_w0, Integrator, n_steps, n_orbits
+):
+    shifted_potential.integrate_orbit(
+        circular_w0, dt=1 * u.Myr, n_steps=n_steps, Integrator=Integrator
+    )

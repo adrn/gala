@@ -23,13 +23,22 @@ New Features
 - ``fast_lyapunov_max()`` now accepts an ``rng`` argument (a ``numpy.random.Generator``)
   for the initial offset vectors, matching ``lyapunov_max()``.
 
+- Added support for stochastic diffusion to orbit integration. ``integrate_orbit()`` has
+  new ``diffusion`` and ``kick_seed`` arguments: a diffusion model from the new
+  ``gala.dynamics.diffusion`` subpackage (``ConstantDiffusion``, or ``GriddedDiffusion``
+  for coefficients that vary over an ``(R, |z|)`` grid) applies an Euler-Maruyama kick
+  to positions and/or velocities during leapfrog integration (requires GSL). See the new
+  "Blurring a phase spiral" tutorial.
+
 
 Bug fixes
 ---------
 
-- Fixed the force evaluation times in ``Ruth4Integrator`` (Python and Cython,
-  including N-body integration) and ``RK5Integrator``, improving accuracy for
-  time-dependent potentials. [#669]
+- Fixed ``TimeInterpolatedPotential`` returning zero energy, gradient, and density
+  after being pickled or deep-copied.
+
+- Fixed HDF5 serialization of ``MockStream`` release times and restored
+  leading/trailing labels as strings when loading a stream.
 
 - Fixed ``find_actions_o2gf()`` raising an error whenever any toy action or angle
   was NaN. NaN samples are now dropped with a warning, and it raises only if more
@@ -38,9 +47,18 @@ Bug fixes
 - ``find_actions_o2gf()`` no longer warns "More unknowns than equations!" on every
   call, and no longer emits each angle-sampling warning twice.
 
+- Fixed ``find_actions_o2gf()`` frequencies when the orbit's times are expressed
+  in a different unit from the toy potential's time unit.
+
 - ``fit_isochrone()`` and ``fit_harmonic_oscillator()`` no longer modify the
   ``minimize_kwargs`` dictionary passed in, and ``fit_harmonic_oscillator()`` no
   longer overrides a user-supplied ``x0``.
+
+- Fixed ``get_staeckel_fudge_delta()`` to honor ``median=False`` for orbits and
+  retain all batch dimensions for phase-space positions. As a result,
+  ``find_actions_staeckel_fudge()`` on a multi-dimensional ``PhaseSpacePosition``
+  now uses a separate Δ for each position instead of the median along the first
+  axis.
 
 - Fixed potential and Hamiltonian gradients evaluated with one time per position
   (``t`` an array), which used the wrong coordinates whenever more than one position
@@ -80,6 +98,29 @@ Bug fixes
   rotated component, instead of returning an incorrect result. It also works for a
   ``TimeInterpolatedPotential`` whose time-varying ``R`` is always the identity.
 
+- Leapfrog integration now raises an error for a time grid with fewer than two times,
+  instead of reading out of bounds.
+
+- Fixed ``LogarithmicPotential.density()``, ``hessian()``, and ``to_sympy()``, which
+  ignored the rotation angle ``phi``.
+
+- Fixed ``SCFPotential`` returning NaN for the gradient on the z axis and for the
+  energy and gradient at the origin. At the origin, the gradient is the symmetric
+  limit, because the ``l=0`` basis functions are cusped there.
+
+- Fixed ``fast_lyapunov_max()`` to integrate at the requested timesteps, and
+  ``fast_lyapunov_max()`` and ``lyapunov_max()`` to normalize exponent estimates by
+  the elapsed time instead of the absolute time. Results now no longer depend on
+  ``t1``, and ``fast_lyapunov_max()`` estimates with ``t1=0`` change slightly
+  (by roughly ``1 / n_steps``).
+
+- Fixed the final sample of DOP853 dense orbit output when rounding places
+  the last interpolation interval just short of the requested final time.
+
+- Fixed the force evaluation times in ``Ruth4Integrator`` (Python and Cython,
+  including N-body integration) and ``RK5Integrator``, improving accuracy for
+  time-dependent potentials.
+
 API changes
 -----------
 
@@ -91,6 +132,10 @@ API changes
 - ``galpy`` and ``twobody`` are no longer optional dependencies. ``galpy`` is still
   supported for interoperability, but must be installed separately.
   ``isochrone_aa_to_xv()`` no longer requires ``twobody``.
+
+- ``Orbit.to_galpy_orbit()`` and ``Orbit.from_galpy_orbit()`` are deprecated and will
+  be removed in a future release. Construct a ``galpy.orbit.Orbit`` directly instead
+  (it accepts an astropy ``SkyCoord``).
 
 - The ``shared`` and ``extra`` optional dependencies are merged into ``extra``
   (``pip install gala[extra]``).
@@ -104,6 +149,12 @@ API changes
 
 Other
 -----
+
+- Reduced ``find_actions_o2gf()`` runtime by reusing mode projections and using
+  matrix products.
+
+- Improve performance of repeated gradient computations with transformed components by
+  allocating persistent scratch space.
 
 1.12.0 (2026-09-27)
 ===================
