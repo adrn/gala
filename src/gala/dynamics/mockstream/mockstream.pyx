@@ -24,6 +24,7 @@ from yaml import dump
 from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
 from cpython.exc cimport PyErr_CheckSignals
+from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
 
 from ...integrate.cyintegrators.dop853 cimport dop853_step, dop853_helper, Fwrapper_direct_nbody, FcnEqDiff
 from ...integrate.cyintegrators.leapfrog cimport c_init_velocity_nbody, c_leapfrog_step_nbody
@@ -38,6 +39,7 @@ from ...io import quantity_to_hdf5
 from ...potential.potential.io import to_dict
 
 from .df cimport BaseStreamDF
+from ..diffusion.diffusion_kick cimport DiffusionKick
 
 __all__ = ['mockstream_dop853', 'mockstream_dop853_animate',
            'mockstream_leapfrog', 'mockstream_leapfrog_animate']
@@ -446,7 +448,8 @@ cpdef mockstream_leapfrog(
     double[:, ::1] stream_w0, double[::1] stream_t1,
     double tfinal, int[::1] nstream,
     int progress=0,
-    int err_if_fail=1
+    int err_if_fail=1,
+    kick_capsule=None
 ):
     """
     Leapfrog integration version of mockstream generation.
@@ -474,6 +477,10 @@ cpdef mockstream_leapfrog(
         Show progress bar (default: 0).
     err_if_fail : int, optional
         Raise error if integration fails (default: 1).
+    kick_capsule : PyCapsule, optional
+        A ``gala.DiffusionKick`` capsule (see gala.dynamics.diffusion). If given, the
+        stream particles (not the N-bodies) get a stochastic kick every
+        ``DiffusionKick.every`` steps after release.
 
     Notes
     -----
@@ -520,8 +527,29 @@ cpdef mockstream_leapfrog(
         int prog_out = max(ntimes // 100, 1)
         int last_i = -1  # Track last loop iteration that ran
 
+        # optional stochastic kick for the stream particles
+        DiffusionKick* dk = NULL
+        int j_last, moved
+        double kick_dt, t_j
+        double dx[3]
+        double dv[3]
+
     # Validate input arrays
     _validate_time_arrays(ntimes, stream_t1.shape[0], nstream.shape[0])
+
+    if kick_capsule is not None:
+        if not PyCapsule_IsValid(kick_capsule, "gala.DiffusionKick"):
+            raise TypeError("kick_capsule is not a valid gala.DiffusionKick capsule.")
+        if not dt > 0:
+            raise ValueError(
+                "The `diffusion` option only supports forward integration (dt > 0)."
+            )
+        dts = np.diff(np.asarray(full_time))
+        if not (np.all(np.isfinite(dts)) and np.allclose(dts, dt, rtol=1e-6, atol=0)):
+            raise ValueError(
+                "The `diffusion` option needs a finite, uniformly spaced time grid."
+            )
+        dk = <DiffusionKick*>PyCapsule_GetPointer(kick_capsule, "gala.DiffusionKick")
 
     # Setup particle potentials
     c_particle_potentials = _setup_particle_potentials(
@@ -579,6 +607,7 @@ cpdef mockstream_leapfrog(
 
             # Integrate from stream_t1[i] to tfinal
             n_steps = <int>((tfinal - stream_t1[i]) / dt + 0.5)
+            j_last = 0
             with nogil:
                 for j in range(n_steps):
                     for k in range(nbodies + nstream[i]):
@@ -588,6 +617,32 @@ cpdef mockstream_leapfrog(
                                             c_particle_potentials, &w_tmp[0, 0], nbodies, k,
                                             &w_tmp[k, 0], &w_tmp[k, half_ndim],
                                             &v_jm1_2[k, 0], &grad[0])
+
+                    # stochastic kick of the stream particles at the synchronized state,
+                    # as in leapfrog_integrate_hamiltonian (every dk.every steps, and at
+                    # the end); rebuild the half-step velocity if a position moved
+                    if dk != NULL and (j + 1 - j_last == dk.every or j == n_steps - 1):
+                        t_j = stream_t1[i] + (j+1)*dt
+                        kick_dt = (j + 1 - j_last) * dt
+                        j_last = j + 1
+                        for k in range(nbodies, nbodies + nstream[i]):
+                            dk.kick(t_j, kick_dt, &w_tmp[k, 0], &w_tmp[k, half_ndim],
+                                    dx, dv, dk.state, dk.rng)
+                            moved = 0
+                            for m in range(half_ndim):
+                                if dx[m] != 0.:
+                                    moved = 1
+                                w_tmp[k, m] = w_tmp[k, m] + dx[m]
+                                w_tmp[k, half_ndim + m] = w_tmp[k, half_ndim + m] + dv[m]
+                                v_jm1_2[k, m] = v_jm1_2[k, m] + dv[m]
+                            if moved:
+                                for m in range(half_ndim):
+                                    grad[m] = 0.
+                                c_init_velocity_nbody(cp, half_ndim, t_j, dt,
+                                                      c_particle_potentials, &w_tmp[0, 0],
+                                                      nbodies, k,
+                                                      &w_tmp[k, 0], &w_tmp[k, half_ndim],
+                                                      &v_jm1_2[k, 0], &grad[0])
 
             PyErr_CheckSignals()
 

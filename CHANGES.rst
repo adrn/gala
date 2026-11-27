@@ -33,6 +33,11 @@ New Features
   to positions and/or velocities during leapfrog integration (requires GSL). See the new
   "Blurring a phase spiral" tutorial.
 
+- ``MockStreamGenerator.run()`` has new ``diffusion`` and ``kick_seed`` arguments, which
+  apply stochastic diffusion kicks to stream particles after they are released (the
+  progenitor and any ``nbody`` perturbers are not kicked). Requires
+  ``Integrator="leapfrog"``.
+
 
 Bug fixes
 ---------

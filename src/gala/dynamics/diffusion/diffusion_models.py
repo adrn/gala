@@ -115,9 +115,26 @@ class DiffusionBase:
             raise ValueError(f"kick_every must be >= 1, got {kick_every}")
         self.c_instance = None  # subclasses build this
 
-    def kick_capsule(self, seed):
-        """A fresh kick (own RNG) for one integration; it keeps this model alive."""
-        return self.c_instance.kick_capsule(seed, self.kick_every)
+    def kick_capsule(self, kick_seed=None, units=None):
+        """A fresh kick (own RNG) for one integration; it keeps this model alive.
+
+        ``kick_seed`` is hashed with `numpy.random.SeedSequence` (``None`` draws fresh
+        entropy). If ``units`` is given, its length and time units must match the
+        model's.
+        """
+        if (
+            units is not None
+            and self.units is not None
+            and any(self.units[k] != units[k] for k in ("length", "time"))
+        ):
+            raise ValueError(
+                "diffusion.units must have the same length and time units as "
+                "the integration unit system."
+            )
+        # hashing avoids GSL's aliasing of small seeds (e.g. 0 and 4357). Note
+        # SeedSequence ignores trailing zeros, so kick_seed=s and (s, 0) are the same.
+        seed = np.random.SeedSequence(kick_seed).generate_state(1, np.uint64)[0]
+        return self.c_instance.kick_capsule(int(seed), self.kick_every)
 
     def coefficients(self, w, t=0.0):
         """Evaluate the model's drift and diffusion tensor at phase-space points.

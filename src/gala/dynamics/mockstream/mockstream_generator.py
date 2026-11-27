@@ -130,6 +130,8 @@ class MockStreamGenerator:
         progress=False,
         Integrator=None,
         Integrator_kwargs=None,
+        diffusion=None,
+        kick_seed=None,
         **time_spec,
     ):
         """
@@ -194,6 +196,15 @@ class MockStreamGenerator:
             when initializing. For example, you can pass in the
             ``atol`` and ``rtol`` keyword arguments to set the absolute and
             relative tolerances for the DOPRI853 integrator.
+        diffusion : `~gala.dynamics.diffusion.DiffusionBase` (optional)
+            A diffusion model that applies stochastic kicks to the stream particles
+            after they are released (see
+            `gala.potential.Hamiltonian.integrate_orbit`). The progenitor and any
+            ``nbody`` perturbers are not kicked. Requires
+            ``Integrator="leapfrog"`` and is not supported with ``output_every``.
+        kick_seed : int or sequence of int (optional)
+            Seed for the diffusion kicks; see
+            `gala.potential.Hamiltonian.integrate_orbit`.
         **time_spec
             Specification of how long to integrate. Most commonly, this is a timestep
             ``dt`` and number of steps ``n_steps``, or a timestep ``dt``, initial time
@@ -222,6 +233,21 @@ class MockStreamGenerator:
 
         # Validates and retrieves the integrator class from string name if needed
         Integrator = get_integrator(Integrator)
+
+        kick_capsule = None
+        if diffusion is not None:
+            if Integrator is not LeapfrogIntegrator:
+                raise NotImplementedError(
+                    "The `diffusion` option is only supported with the "
+                    'LeapfrogIntegrator: pass Integrator="leapfrog".'
+                )
+            if output_every is not None:
+                raise NotImplementedError(
+                    "The `diffusion` option is not supported with `output_every`."
+                )
+            kick_capsule = diffusion.kick_capsule(
+                kick_seed, units=self.hamiltonian.units
+            )
 
         units = self.hamiltonian.units
         t = parse_time_specification(units, **time_spec)
@@ -325,6 +351,7 @@ class MockStreamGenerator:
                     orbit_t[-1],
                     all_nstream[nstream_idx].astype("i4"),
                     progress=int(progress),
+                    kick_capsule=kick_capsule,
                 )
             else:  # store snapshots
                 if output_filename is None:
