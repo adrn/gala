@@ -318,18 +318,7 @@ class Hamiltonian(CommonBase):
                     "The `diffusion` option is currently only supported with the "
                     "LeapfrogIntegrator."
                 )
-            if diffusion.units is not None and any(
-                diffusion.units[k] != self.units[k] for k in ("length", "time")
-            ):
-                raise ValueError(
-                    "diffusion.units must have the same length and time units as "
-                    "the Hamiltonian's unit system."
-                )
-            # SeedSequence(None) draws fresh entropy; hashing avoids GSL's aliasing
-            # of small seeds (e.g. 0 and 4357). Note SeedSequence ignores trailing
-            # zeros, so kick_seed=s and (s, 0) give the same noise.
-            seed = np.random.SeedSequence(kick_seed).generate_state(1, np.uint64)[0]
-            kick_capsule = diffusion.kick_capsule(int(seed))
+            kick_capsule = diffusion.kick_capsule(kick_seed, units=self.units)
 
         if isinstance(w0, PhaseSpacePosition):
             ndim = w0.ndim
