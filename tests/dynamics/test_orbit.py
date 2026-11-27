@@ -1,3 +1,5 @@
+from enum import Enum
+
 import astropy.units as u
 import numpy as np
 import pytest
@@ -12,11 +14,14 @@ from gala._optional_deps import HAS_GALPY, HAS_H5PY
 from gala.dynamics import Orbit, PhaseSpacePosition, combine
 from gala.integrate import DOPRI853Integrator
 from gala.potential import (
+    CCompositePotential,
+    CompositePotential,
     ConstantRotatingFrame,
     Hamiltonian,
     HernquistPotential,
     KeplerPotential,
     LogarithmicPotential,
+    MilkyWayPotential,
     NFWPotential,
     StaticFrame,
 )
@@ -622,6 +627,15 @@ _v = ([[1, 2, 3.0], [1, 2, 3.0]] * u.km / u.s).T
             frame=StaticFrame(galactic),
             potential=HernquistPotential(m=1e10, c=0.5, units=galactic),
         ),
+        Orbit(
+            _x,
+            _v,
+            t=[5, 99] * u.Myr,
+            frame=ConstantRotatingFrame(
+                Omega=[0, 0, 25] * u.km / u.s / u.kpc, units=galactic
+            ),
+            potential=MilkyWayPotential(version="v2"),
+        ),
     ],
 )
 @pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
@@ -632,6 +646,10 @@ def test_io(tmpdir, obj):
     with h5py.File(filename, "w") as f:
         obj.to_hdf5(f)
 
+    if obj.potential is not None:
+        with h5py.File(filename, "r") as f:
+            assert "!!python/" not in f["potential"][()].decode("utf-8")
+
     obj2 = Orbit.from_hdf5(filename)
     assert u.allclose(obj.xyz, obj2.xyz)
     assert u.allclose(obj.v_xyz, obj2.v_xyz)
@@ -640,6 +658,205 @@ def test_io(tmpdir, obj):
 
     assert obj.frame == obj2.frame
     assert obj.potential == obj2.potential
+
+
+_orbit_sentinel_calls = []
+
+
+def _orbit_sentinel_callable(*args, **kwargs):
+    _orbit_sentinel_calls.append((args, kwargs))
+    return {"class": "NullPotential"}
+
+
+@pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
+def test_from_hdf5_rejects_unsafe_yaml(tmp_path):
+    import h5py
+    import yaml
+
+    filename = str(tmp_path / "unsafe_orbit.hdf5")
+    orb = Orbit(_x, _v, t=[5, 99] * u.Myr, frame=StaticFrame(galactic))
+    with h5py.File(filename, "w") as f:
+        orb.to_hdf5(f)
+        mod = _orbit_sentinel_callable.__module__
+        payload = f"!!python/object/apply:{mod}._orbit_sentinel_callable []\n"
+        f["potential"] = payload.encode("utf-8")
+
+    _orbit_sentinel_calls.clear()
+    with pytest.raises(yaml.constructor.ConstructorError):
+        Orbit.from_hdf5(filename)
+    assert _orbit_sentinel_calls == []
+
+
+@pytest.mark.parametrize("composite_cls", [CompositePotential, CCompositePotential])
+@pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
+def test_io_composite_numpy_str_component_names(tmp_path, composite_cls):
+    import h5py
+
+    labels = np.array(["halo", "bulge"])
+    assert type(labels[0]) is np.str_
+
+    pot = composite_cls()
+    pot[labels[0]] = NFWPotential(m=1e12 * u.Msun, r_s=15 * u.kpc, units=galactic)
+    pot[labels[1]] = HernquistPotential(m=5e9 * u.Msun, c=1 * u.kpc, units=galactic)
+
+    obj = Orbit(
+        _x,
+        _v,
+        t=[5, 99] * u.Myr,
+        frame=StaticFrame(galactic),
+        potential=pot,
+    )
+
+    filename = str(tmp_path / "orbit_np_str_composite.hdf5")
+    with h5py.File(filename, "w") as f:
+        obj.to_hdf5(f)
+
+    with h5py.File(filename, "r") as f:
+        assert "!!python/" not in f["potential"][()].decode("utf-8")
+
+    obj2 = Orbit.from_hdf5(filename)
+    assert u.allclose(obj.xyz, obj2.xyz)
+    assert u.allclose(obj.v_xyz, obj2.v_xyz)
+    assert u.allclose(obj.t, obj2.t)
+    assert obj.frame == obj2.frame
+    assert obj.potential == obj2.potential
+    assert list(obj2.potential.keys()) == ["halo", "bulge"]
+    assert all(type(k) is str for k in obj2.potential)
+    assert u.allclose(obj.energy(), obj2.energy())
+
+
+class _OrbitPartEnum(str, Enum):  # noqa: UP042
+    HALO = "halo"
+
+
+@pytest.mark.parametrize("composite_cls", [CompositePotential, CCompositePotential])
+@pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
+def test_io_composite_str_enum_component_name_no_collision(tmp_path, composite_cls):
+    import h5py
+
+    assert str(_OrbitPartEnum.HALO) == "_OrbitPartEnum.HALO"
+
+    pot = composite_cls()
+    pot[_OrbitPartEnum.HALO] = KeplerPotential(m=3e10 * u.Msun, units=galactic)
+    pot["_OrbitPartEnum.HALO"] = KeplerPotential(m=7e10 * u.Msun, units=galactic)
+
+    pos = np.array([[1.0, 0.0, 0.0], [1.0, 0.0, 0.0]]).T * u.kpc
+    vel = np.zeros_like(pos.value) * u.km / u.s
+    obj = Orbit(
+        pos,
+        vel,
+        t=[0.0, 1.0] * u.Myr,
+        frame=StaticFrame(galactic),
+        potential=pot,
+    )
+    expected_energy = obj.energy()
+
+    filename = str(tmp_path / "orbit_str_enum_composite.hdf5")
+    with h5py.File(filename, "w") as f:
+        obj.to_hdf5(f)
+
+    with h5py.File(filename, "r") as f:
+        assert "!!python/" not in f["potential"][()].decode("utf-8")
+
+    obj2 = Orbit.from_hdf5(filename)
+    assert u.allclose(obj.xyz, obj2.xyz)
+    assert u.allclose(obj.v_xyz, obj2.v_xyz)
+    assert u.allclose(obj.t, obj2.t)
+    assert obj.frame == obj2.frame
+    assert obj.potential == obj2.potential
+    assert list(obj2.potential.keys()) == ["halo", "_OrbitPartEnum.HALO"]
+    assert all(type(k) is str for k in obj2.potential)
+    assert u.allclose(obj.energy(), obj2.energy())
+    assert u.allclose(obj2.energy(), expected_energy)
+    assert u.allclose(obj2.potential["halo"].parameters["m"], 3e10 * u.Msun)
+    assert u.allclose(
+        obj2.potential["_OrbitPartEnum.HALO"].parameters["m"], 7e10 * u.Msun
+    )
+
+
+class _OrbitDistinctStr(str):
+    def __eq__(self, other):
+        return type(other) is _OrbitDistinctStr and str.__eq__(self, other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash((_OrbitDistinctStr, str.__str__(self)))
+
+
+@pytest.mark.parametrize("composite_cls", [CompositePotential, CCompositePotential])
+@pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
+def test_io_composite_distinct_str_duplicate_name_raises(tmp_path, composite_cls):
+    import h5py
+
+    distinct_halo = _OrbitDistinctStr("halo")
+    assert distinct_halo != "halo"
+
+    pot = composite_cls()
+    pot[distinct_halo] = KeplerPotential(m=3e10 * u.Msun, units=galactic)
+    pot["halo"] = KeplerPotential(m=7e10 * u.Msun, units=galactic)
+
+    pos = np.array([[1.0, 0.0, 0.0], [1.0, 0.0, 0.0]]).T * u.kpc
+    vel = np.zeros_like(pos.value) * u.km / u.s
+    obj = Orbit(
+        pos,
+        vel,
+        t=[0.0, 1.0] * u.Myr,
+        frame=StaticFrame(galactic),
+        potential=pot,
+    )
+
+    filename = str(tmp_path / "orbit_distinct_str_dup.hdf5")
+    with (
+        h5py.File(filename, "w") as f,
+        pytest.raises(ValueError, match="Duplicate component name 'halo'"),
+    ):
+        obj.to_hdf5(f)
+
+
+@pytest.mark.parametrize("composite_cls", [CompositePotential, CCompositePotential])
+@pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
+def test_io_composite_distinct_str_unique_names_roundtrip(tmp_path, composite_cls):
+    import h5py
+
+    distinct_disk = _OrbitDistinctStr("disk")
+    assert distinct_disk != "disk"
+
+    pot = composite_cls()
+    pot[distinct_disk] = KeplerPotential(m=3e10 * u.Msun, units=galactic)
+    pot["halo"] = KeplerPotential(m=7e10 * u.Msun, units=galactic)
+
+    pos = np.array([[1.0, 0.0, 0.0], [1.0, 0.0, 0.0]]).T * u.kpc
+    vel = np.zeros_like(pos.value) * u.km / u.s
+    obj = Orbit(
+        pos,
+        vel,
+        t=[0.0, 1.0] * u.Myr,
+        frame=StaticFrame(galactic),
+        potential=pot,
+    )
+    expected_energy = obj.energy()
+
+    filename = str(tmp_path / "orbit_distinct_str_unique.hdf5")
+    with h5py.File(filename, "w") as f:
+        obj.to_hdf5(f)
+
+    with h5py.File(filename, "r") as f:
+        assert "!!python/" not in f["potential"][()].decode("utf-8")
+
+    obj2 = Orbit.from_hdf5(filename)
+    assert u.allclose(obj.xyz, obj2.xyz)
+    assert u.allclose(obj.v_xyz, obj2.v_xyz)
+    assert u.allclose(obj.t, obj2.t)
+    assert obj.frame == obj2.frame
+    assert list(obj2.potential.keys()) == ["disk", "halo"]
+    assert all(type(k) is str for k in obj2.potential)
+    assert obj2.potential["disk"] == obj.potential[distinct_disk]
+    assert obj2.potential["halo"] == obj.potential["halo"]
+    assert u.allclose(obj2.energy(), expected_energy)
+    assert u.allclose(obj2.potential["disk"].parameters["m"], 3e10 * u.Msun)
+    assert u.allclose(obj2.potential["halo"].parameters["m"], 7e10 * u.Msun)
 
 
 @pytest.mark.parametrize(

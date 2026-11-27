@@ -253,7 +253,7 @@ class Orbit(PhaseSpacePosition):
 
             from ..potential.potential.io import to_dict
 
-            f["potential"] = yaml.dump(to_dict(self.potential)).encode("utf-8")
+            f["potential"] = yaml.safe_dump(to_dict(self.potential)).encode("utf-8")
 
         if self.t is not None:
             quantity_to_hdf5(f, "time", self.t)
@@ -314,7 +314,7 @@ class Orbit(PhaseSpacePosition):
 
             from ..potential.potential.io import from_dict
 
-            dict_ = yaml.load(f["potential"][()].decode("utf-8"), Loader=yaml.Loader)
+            dict_ = yaml.safe_load(f["potential"][()].decode("utf-8"))
             potential = from_dict(dict_)
 
         if close:
