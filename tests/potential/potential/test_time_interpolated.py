@@ -419,7 +419,9 @@ def test_scf_interpolated():
 
 
 @pytest.mark.xfail(
-    reason="SphericalSplinePotential does not work with time interpolated wrapper"
+    reason="time-varying SphericalSplinePotential values are not supported",
+    raises=NotImplementedError,
+    strict=True,
 )
 def test_spherical_spline_time_interpolated():
     """
@@ -457,6 +459,42 @@ def test_spherical_spline_time_interpolated():
     orbit = pot_interp.integrate_orbit(
         w0, dt=0.1 * u.Myr, t1=0 * u.Gyr, t2=4 * u.Gyr, Integrator=gi.DOPRI853Integrator
     )
+
+
+@pytest.mark.parametrize("spline_value_type", ["density", "mass", "potential"])
+def test_spherical_spline_moving_origin(spline_value_type):
+    """A SphericalSplinePotential with a time-varying origin matches the static
+    potential evaluated at the shifted position."""
+    hernquist = gp.HernquistPotential(m=1e11 * u.Msun, c=10 * u.kpc, units=galactic)
+    r_knots = np.geomspace(1e-2, 1e3, 256) * u.kpc
+    xyz = np.zeros((3, len(r_knots))) * u.kpc
+    xyz[0] = r_knots
+    values = {
+        "density": hernquist.density,
+        "mass": hernquist.mass_enclosed,
+        "potential": hernquist.energy,
+    }[spline_value_type](xyz)
+    kw = {
+        "r_knots": r_knots,
+        "spline_values": values,
+        "spline_value_type": spline_value_type,
+        "units": galactic,
+    }
+    static = gp.SphericalSplinePotential(**kw)
+
+    t = np.linspace(0, 1000, 11) * u.Myr
+    origin = np.zeros((len(t), 3))
+    origin[:, 0] = np.linspace(0, 50, len(t))
+    moving = gp.TimeInterpolatedPotential(
+        gp.SphericalSplinePotential, t, origin=origin * u.kpc, **kw
+    )
+
+    x = [[30.0], [5.0], [1.0]] * u.kpc
+    shift = [[25.0], [0.0], [0.0]] * u.kpc
+    t_eval = 500 * u.Myr
+    assert u.allclose(moving.energy(x, t=t_eval), static.energy(x - shift))
+    assert u.allclose(moving.acceleration(x, t=t_eval), static.acceleration(x - shift))
+    assert u.allclose(moving.density(x, t=t_eval), static.density(x - shift))
 
 
 # Check that all potential classes work with TimeInterpolatedPotential
@@ -505,6 +543,12 @@ def test_all_builtin_potentials_time_interpolated(pot_cls_name):
 
     elif pot_cls_name in ("EXPPotential", "PyEXPPotential"):
         pytest.skip(f"{pot_cls_name} uses its own interpolation")
+
+    elif pot_cls_name == "SphericalSplinePotential":
+        pytest.skip(
+            "only the origin/rotation can vary in time; see "
+            "test_spherical_spline_moving_origin"
+        )
 
     pot_const = pot_cls(**params_const, units=galactic)
     pot_time = gp.TimeInterpolatedPotential(

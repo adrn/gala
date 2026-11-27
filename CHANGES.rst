@@ -20,6 +20,9 @@ New Features
   apo/pericenter (Sanders & Binney 2016). This is much faster than the default
   energy-variance fit (``method="variance"``).
 
+- ``TimeInterpolatedPotential`` now supports ``SphericalSplinePotential`` with a
+  time-varying origin or rotation (but not time-varying spline values).
+
 - ``fast_lyapunov_max()`` now accepts an ``rng`` argument (a ``numpy.random.Generator``)
   for the initial offset vectors, matching ``lyapunov_max()``.
 
