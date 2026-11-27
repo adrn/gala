@@ -53,7 +53,8 @@ cdef extern from "dynamics/diffusion/src/diffusion.h":
                                 double *mu, double *M, void *state) noexcept nogil
     void* gala_diffusion_epicyclic_alloc(const double *lnR, const double *lnOmega,
                                          const double *lnkappa, const double *lnnu,
-                                         const double *lnLz, int n) nogil
+                                         const double *lnSigma, const double *lnLz,
+                                         int n) nogil
     void gala_diffusion_epicyclic_free(void* state) nogil
 
 
@@ -126,9 +127,11 @@ cdef class CDiffusionWrapper:
         self.cdiffusion.state = self._grid
 
     def init_winter27(self, double[::1] lnR, double[::1] lnOmega, double[::1] lnkappa,
-                      double[::1] lnnu, double[::1] lnLz, double[::1] params):
+                      double[::1] lnnu, double[::1] lnSigma, double[::1] lnLz,
+                      double[::1] params):
         self._epi = gala_diffusion_epicyclic_alloc(
-            &lnR[0], &lnOmega[0], &lnkappa[0], &lnnu[0], &lnLz[0], lnR.shape[0]
+            &lnR[0], &lnOmega[0], &lnkappa[0], &lnnu[0], &lnSigma[0], &lnLz[0],
+            lnR.shape[0]
         )
         if self._epi == NULL:
             raise RuntimeError(

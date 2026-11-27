@@ -44,6 +44,7 @@ typedef struct {
     gsl_spline *lnkappa; // ln kappa(ln R)
     gsl_spline *lnnu;    // ln nu(ln R)
     gsl_spline *lnRg;    // ln R_g(ln L_z), the inverse of L_z = R v_c(R)
+    gsl_spline *lnSigma; // ln(Sigma_gas / Sigma_0)(ln R), for the ISM model
 #endif
     double lnR_min, lnR_max, lnLz_min, lnLz_max;
 } epicyclic_state;
@@ -303,7 +304,8 @@ void gala_diffusion_epicyclic_map(const double *epi, const double *A_J, const do
 
 /* Epicyclic quantities and actions at (x, v). Returns 0 if the orbit is outside the
    tabulated rotation curve (or retrograde), in which case nothing is filled.
-   epi = (R_g, Omega, kappa, nu, q_R); cyl = (R, v_R, v_phi, z, v_z). */
+   epi = (R_g, Omega, kappa, nu, q_R, dln nu/dln R, ln Sigma/Sigma_0,
+          dln Sigma/dln R), all at R_g; cyl = (R, v_R, v_phi, z, v_z). */
 static int epicyclic_actions(const epicyclic_state *s, const double *x, const double *v,
                              double J_floor, double *epi, double *J, double *cyl) {
 #if USE_GSL == 1
@@ -325,6 +327,9 @@ static int epicyclic_actions(const epicyclic_state *s, const double *x, const do
     epi[3] = nu;
     // q_R = -dln kappa/dln R (1 for a flat rotation curve)
     epi[4] = -gsl_spline_eval_deriv(s->lnkappa, lnRg, NULL);
+    epi[5] = gsl_spline_eval_deriv(s->lnnu, lnRg, NULL);
+    epi[6] = gsl_spline_eval(s->lnSigma, lnRg, NULL);
+    epi[7] = gsl_spline_eval_deriv(s->lnSigma, lnRg, NULL);
 
     double dR = R - Rg;
     J[0] = fmax((vR * vR + ka * ka * dR * dR) / (2.0 * ka), J_floor);
@@ -343,15 +348,18 @@ static int epicyclic_actions(const epicyclic_state *s, const double *x, const do
 }
 
 /*
-    ISM-driven diffusion (Modak et al. 2026 fits as used by Winter-Granic et al. 2027,
-    following their reference script). The fits are rescaled to each orbit's guiding
-    radius (R_g, kappa, nu), suppressed for vertically hot orbits by the gas-disc
-    thickness, and multiplied by factors for the ISM surface density, fluctuation scale
-    and correlation time (computed in Python). Regimes switch at fixed breaks (in kpc
-    km/s). Drifts A_i = 1/2 dD_ii/dJ_i; A_Jphi = 0.
+    ISM-driven diffusion of Winter-Granic et al. (2027): the Modak et al. (2026, in
+    prep.) solar-neighbourhood fits, rescaled to each orbit's guiding radius (R_g,
+    kappa, nu, Sigma_gas(R_g)), suppressed for vertically hot orbits by the gas-disc
+    thickness (xi), and multiplied by factors for the fluctuation scale, correlation
+    time and gas thickness (computed in Python). Each coefficient is a broken power law
+    in the actions that is continuous at the breaks, i.e. the smaller of its long- and
+    short-wavelength branches. Drifts A_i = 1/2 dD_ii/dJ_i, with A_Jphi through R_g.
     pars = [amp2, J_unit, D_unit, J_floor, longwave, kappa_ref, nu_ref, R_ref, H_gas,
-            k_star, f_low, f_R_high, f_P_high]
-    (all in the integrator's units; D_unit = (kpc km/s)^2/Gyr, J_unit = kpc km/s).
+            k_star, c_low, c_mid, c_high, c_h]
+    (all in the integrator's units; D_unit = (kpc km/s)^2/Gyr, J_unit = kpc km/s;
+    c_low/mid/high = (tau/tau_0) (lambda/lambda_0)^(2.3/3.3/5.3),
+    c_h = ((1 + k_star H_gas)/3.1)^-2).
 */
 void ism_diffusion_winter27(double t, double *pars, double *x, double *v,
                             double *mu, double *M, void *state) {
@@ -363,56 +371,65 @@ void ism_diffusion_winter27(double t, double *pars, double *x, double *v,
     const int longwave = pars[4] != 0.0;
     const double kappa_ref = pars[5], nu_ref = pars[6], R_ref = pars[7];
     const double H_gas = pars[8], k_star = pars[9];
-    const double f_low = pars[10], f_R_high = pars[11], f_P_high = pars[12];
+    const double c_low = pars[10], c_mid = pars[11], c_high = pars[12], c_h = pars[13];
 
-    double epi[5], J[3], cyl[5];
+    double epi[8], J[3], cyl[5];
     if (!epicyclic_actions((const epicyclic_state *)state, x, v, J_floor, epi, J, cyl))
         return;
 
     // local environment at the guiding radius
-    const double nu = epi[3];
-    const double kr = epi[2] / kappa_ref, rr = epi[0] / R_ref, nr = nu / nu_ref;
+    const double Rg = epi[0], Om = epi[1], ka = epi[2], nu = epi[3];
+    const double kr = ka / kappa_ref, rr = Rg / R_ref, nr = nu / nu_ref;
+    const double s2 = exp(2.0 * epi[6]); // (Sigma(R_g) / Sigma_0)^2
 
     const double jR = J[0] / Ju, jz = J[2] / Ju; // dimensionless actions
-    const double inf = INFINITY;
-    const double JR_break = longwave ? inf : 2.4, Jp_break = longwave ? inf : 0.72;
-    const double JRz_break = longwave ? inf : 1.5, Jz_break = 2.3;
-
-    double D_J[3], A_J[3] = {0.0, 0.0, 0.0}; // in D_unit and D_unit / J_unit
-
-    // D_JRJR: 9.3 jR / kr (long wavelength) | 35 jR^-1/2 kr^1/2 (short)
-    const int hiR = jR > JR_break, hiP = jR > Jp_break;
-    if (hiR) {
-        D_J[0] = 35.0 / sqrt(jR) * sqrt(kr) * f_R_high;
-        A_J[0] = -0.25 * D_J[0] / jR;
-    } else {
-        D_J[0] = 9.3 * jR / kr * f_low;
-        A_J[0] = 0.5 * 9.3 / kr * f_low;
-    }
-    // D_JpJp: 6900 rr^2 | 5900 jR^-1/2 rr^2 kr^1/2 (J_phi dependence not used => A_Jp = 0)
-    D_J[1] = hiP ? 5900.0 / sqrt(jR) * rr * rr * sqrt(kr) * f_P_high
-                 : 6900.0 * rr * rr * f_low;
+    double D_J[3], A_J[3]; // in D_unit and D_unit / J_unit, until scaled below
 
     // the thickness of the gas disc suppresses planar forcing of vertically hot orbits
+    // (Modak et al. 2026, eq. 48); dlnxi = dln xi / dln nu at fixed J_z, for A_Jphi
     const double KH = k_star * H_gas;
     const double Jv = fmax(2.0 * J[2] / (nu * H_gas * H_gas), 0.0);
     const double pre = (1.0 + 0.71 * KH) * (1.0 + 0.71 * KH);
-    const double xi = pre / (1.0 + (pre - 1.0) * (1.0 + cbrt(KH) * pow(Jv, 0.75)));
-    const double sR = xi / (hiR ? 0.75 : 0.94);
-    D_J[0] *= sR;
-    A_J[0] *= sR;
-    D_J[1] *= xi / (hiP ? 0.84 : 0.98);
+    const double u = cbrt(KH) * pow(Jv, 0.75);
+    const double den = 1.0 + (pre - 1.0) * (1.0 + u);
+    const double xi = pre / den, dlnxi = 0.75 * (pre - 1.0) * u / den;
 
-    // D_JzJz: 0.29 jz / nr | 0.35 jz jR^-1/2 kr^1/2 / nr | 1.2 jz^-1/2 jR^-1/2 nr^1/2 kr^1/2
-    if (!(jR > JRz_break)) {
-        D_J[2] = 0.29 * jz / nr;
-        A_J[2] = 0.5 * 0.29 / nr;
-    } else if (jz > Jz_break) {
-        D_J[2] = 1.2 / sqrt(jz * jR) * sqrt(nr * kr);
-        A_J[2] = -0.25 * D_J[2] / jz;
+    // D_JRJR: 9.3 jR / kr (long wavelength) | 35 jR^-1/2 kr^1/2 (short)
+    const double R_long = 9.3 * jR / kr * s2 * c_low * xi / 0.94;
+    const double R_short = 35.0 / sqrt(jR) * sqrt(kr) * s2 * c_high * xi / 0.75;
+    if (longwave || R_long <= R_short) {
+        D_J[0] = R_long;
+        A_J[0] = 0.5 * R_long / jR;
     } else {
-        D_J[2] = 0.35 * jz / sqrt(jR) * sqrt(kr) / nr;
-        A_J[2] = 0.5 * D_J[2] / jz;
+        D_J[0] = R_short;
+        A_J[0] = -0.25 * R_short / jR;
+    }
+
+    // D_JpJp: 6900 rr^2 | 5900 jR^-1/2 rr^2 kr^1/2
+    const double P_long = 6900.0 * rr * rr * s2 * c_low * xi / 0.98;
+    const double P_short = 5900.0 / sqrt(jR) * rr * rr * sqrt(kr) * s2 * c_mid * xi / 0.84;
+    const int P_is_short = !longwave && P_short < P_long;
+    D_J[1] = P_is_short ? P_short : P_long;
+    // dln D_JpJp / dln R_g at fixed J_R, J_z: R_g^2, Sigma(R_g)^2, kappa^1/2 (short
+    // branch; dln kappa/dln R = -q_R) and xi through nu(R_g)
+    const double dlnDP = 2.0 + 2.0 * epi[7] - (P_is_short ? 0.5 * epi[4] : 0.0)
+                         + dlnxi * epi[5];
+
+    // D_JzJz: 0.25 jz / nr (long radial and vertical wavelength) | 0.30 jz jR^-1/2
+    // kr^1/2 / nr (short radial) | 0.31 jz^-1/2 jR^-1/2 nr^1/2 kr^1/2 (both short).
+    // Long radial with short vertical wavelength keeps the first branch.
+    const double Z_LL = 0.25 * jz / nr * s2 * c_h * c_low;
+    const double Z_LS = 0.30 * jz / sqrt(jR) * sqrt(kr) / nr * s2 * c_h * c_mid;
+    const double Z_SS = 0.31 / sqrt(jz * jR) * sqrt(nr * kr) * s2 * c_h * c_high;
+    if (longwave || Z_LL <= Z_LS) {
+        D_J[2] = Z_LL;
+        A_J[2] = 0.5 * Z_LL / jz;
+    } else if (Z_LS <= Z_SS) {
+        D_J[2] = Z_LS;
+        A_J[2] = 0.5 * Z_LS / jz;
+    } else {
+        D_J[2] = Z_SS;
+        A_J[2] = -0.25 * Z_SS / jz;
     }
 
     const double k = amp2 * Du;
@@ -420,12 +437,14 @@ void ism_diffusion_winter27(double t, double *pars, double *x, double *v,
         D_J[i] *= k;
         A_J[i] *= k / Ju;
     }
+    // A_Jphi = 1/2 dD/dJphi = Omega / (R_g kappa^2) dD/dR_g (dR_g/dJphi = 2 Omega / (R_g kappa^2))
+    A_J[1] = Om / (Rg * Rg * ka * ka) * D_J[1] * dlnDP;
     gala_diffusion_epicyclic_map(epi, A_J, D_J, J, cyl, mu, M);
 }
 
 void *gala_diffusion_epicyclic_alloc(const double *lnR, const double *lnOmega,
                                      const double *lnkappa, const double *lnnu,
-                                     const double *lnLz, int n) {
+                                     const double *lnSigma, const double *lnLz, int n) {
 #if USE_GSL == 1
     GSLErrorHandlerOff guard;
     epicyclic_state *s = (epicyclic_state *)calloc(1, sizeof(epicyclic_state));
@@ -435,10 +454,10 @@ void *gala_diffusion_epicyclic_alloc(const double *lnR, const double *lnOmega,
     s->lnLz_min = lnLz[0];
     s->lnLz_max = lnLz[n - 1];
 
-    gsl_spline **sp[4] = {&s->lnOmega, &s->lnkappa, &s->lnnu, &s->lnRg};
-    const double *xs[4] = {lnR, lnR, lnR, lnLz};
-    const double *ys[4] = {lnOmega, lnkappa, lnnu, lnR};
-    for (int i = 0; i < 4; i++) {
+    gsl_spline **sp[5] = {&s->lnOmega, &s->lnkappa, &s->lnnu, &s->lnRg, &s->lnSigma};
+    const double *xs[5] = {lnR, lnR, lnR, lnLz, lnR};
+    const double *ys[5] = {lnOmega, lnkappa, lnnu, lnR, lnSigma};
+    for (int i = 0; i < 5; i++) {
         *sp[i] = gsl_spline_alloc(gsl_interp_cspline, n);
         if (*sp[i] == NULL || gsl_spline_init(*sp[i], xs[i], ys[i], n) != GSL_SUCCESS) {
             gala_diffusion_epicyclic_free(s);
@@ -447,7 +466,8 @@ void *gala_diffusion_epicyclic_alloc(const double *lnR, const double *lnOmega,
     }
     return (void *)s;
 #else
-    (void)lnR; (void)lnOmega; (void)lnkappa; (void)lnnu; (void)lnLz; (void)n;
+    (void)lnR; (void)lnOmega; (void)lnkappa; (void)lnnu; (void)lnSigma; (void)lnLz;
+    (void)n;
     return NULL;
 #endif
 }
@@ -456,8 +476,8 @@ void gala_diffusion_epicyclic_free(void *state) {
 #if USE_GSL == 1
     if (state == NULL) return;
     epicyclic_state *s = (epicyclic_state *)state;
-    gsl_spline *sp[4] = {s->lnOmega, s->lnkappa, s->lnnu, s->lnRg};
-    for (int i = 0; i < 4; i++)
+    gsl_spline *sp[5] = {s->lnOmega, s->lnkappa, s->lnnu, s->lnRg, s->lnSigma};
+    for (int i = 0; i < 5; i++)
         if (sp[i] != NULL) gsl_spline_free(sp[i]);
     free(s);
 #else

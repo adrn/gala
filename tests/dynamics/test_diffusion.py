@@ -659,71 +659,75 @@ def _winter27_reference(
     Sigma=12 * u.Msun / u.pc**2,
     lambda_star=600 * u.pc,
     tau_star=70 * u.Myr,
-    H_gas=250 * u.pc,
+    H_gas=200 * u.pc,
     long_wavelength_only=False,
 ):
-    """Independent numpy transcription of the reference script (eom_model.py) and
-    Winter-Granic et al. App. B, in physical units (kpc, km/s, Gyr). Unlike the
-    script, the long-wavelength A_JR carries the same Sigma/tau/lambda factor as
-    D_JRJR (A = 1/2 dD/dJ)."""
+    """Independent numpy transcription of Winter-Granic et al. (2027) Sections 2.3 and
+    3.1, in physical units (kpc, km/s, Gyr). Broken power laws are continuous (the
+    smaller branch), and A_Jphi is a finite difference of D_JphiJphi in L_z."""
     kms, kpc, Gyr = u.km / u.s, u.kpc, u.Gyr
     act = (1 * kpc * kms).decompose(units).value
     vel = (1 * kms).decompose(units).value
     freq = (1 * kms / kpc).decompose(units).value
+    lunit = (1 * kpc).decompose(units).value
+
+    def epicyclic(Lz):  # in kpc km/s -> (R_g, Omega, kappa, nu, q_R) in kpc, km/s/kpc
+        Rg, Om, ka, nu, qR = _winter27_epicyclic(pot, Lz * act, units)
+        return Rg / lunit, Om / freq, ka / freq, nu / freq, qR
 
     x, y, z, vx, vy, vz = xv
     R = np.hypot(x, y)
     vR = (x * vx + y * vy) / R / vel
     vT = (x * vy - y * vx) / R / vel
-    z = z / (1 * kpc).decompose(units).value
+    z = z / lunit
     vz = vz / vel
-    R = R / (1 * kpc).decompose(units).value
+    R = R / lunit
     L = R * vT
-    Rg, Om, ka, nu, qR = _winter27_epicyclic(pot, L * act, units)
-    Om, ka, nu = Om / freq, ka / freq, nu / freq
-    Rg = Rg / (1 * kpc).decompose(units).value
+    Rg, Om, ka, nu, qR = epicyclic(L)
     vc = Rg * Om
     floor = J_floor_val / act
     J = max((vR**2 + ka**2 * (R - Rg) ** 2) / (2 * ka), floor)
     Jz = max((vz**2 + nu**2 * z**2) / (2 * nu), floor)
 
-    # environment: always the orbit's own guiding radius
-    R_env, ka_env, nu_env = Rg, ka, nu
+    lw = long_wavelength_only
     tt = (tau_star / (70 * u.Myr)).to_value(u.one)
-    Sr = (Sigma / (12 * u.Msun / u.pc**2)).to_value(u.one)
     lr = (lambda_star / (600 * u.pc)).to_value(u.one)
+    c_low, c_mid, c_high = tt * lr**2.3, tt * lr**3.3, tt * lr**5.3
+    Hgas = H_gas.to_value(kpc)
+    KH = 2 * np.pi / lambda_star.to_value(kpc) * Hgas
+    c_h = ((1 + KH) / 3.1) ** -2
     amp2 = amplitude**2
 
-    big = np.inf if long_wavelength_only else None
-    JR_break = big or 2.4
-    Jp_break = big or 0.72
-    JRz_break = big or 1.5
-    Jz_break = 2.3
+    def sigma2(Rg_):
+        S = Sigma(Rg_ * kpc) if callable(Sigma) else Sigma
+        return (S / (12 * u.Msun / u.pc**2)).to_value(u.one) ** 2
 
-    kr = ka_env / (np.sqrt(2) * 28)
-    rr = R_env / 8.0
-    j = J
-    use_high_R, use_high_phi = j > JR_break, j > Jp_break
-    D_R_low = 9.3 * j / kr * tt * Sr**2 * lr**2.3
-    D_R_high = 35.0 * j**-0.5 * kr**0.5 * Sr**2 * tt * lr ** (2.3 + 3)
-    D_phi_low = 6900.0 * rr**2 * Sr**2 * tt * lr**2.3
-    D_phi_high = 5900.0 * j**-0.5 * rr**2 * kr**0.5 * Sr**2 * tt * lr ** (2.3 + 1)
-    D_JRJR = amp2 * (D_R_high if use_high_R else D_R_low)
-    dD = -0.5 * D_R_high / j if use_high_R else D_R_low / j
-    D_JpJp = amp2 * (D_phi_high if use_high_phi else D_phi_low)
-    A_JR = 0.5 * amp2 * dD
-    A_Jp = 0.0
-    # planar suppression by the gas-disc thickness
-    Hgas = H_gas.to_value(kpc)
-    kstar = 2 * np.pi / lambda_star.to_value(kpc)  # 1/kpc
-    KH = kstar * Hgas
-    Jvert = max(2 * Jz / (nu_env * Hgas**2), 0.0)  # (kpc km/s)/(km/s/kpc kpc^2)
-    pre = (1 + 0.71 * KH) ** 2
-    xi = pre / (1 + (pre - 1) * (1 + KH ** (1 / 3) * Jvert**0.75))
-    sR = xi / (0.75 if use_high_R else 0.94)
-    A_JR *= sR
-    D_JRJR *= sR
-    D_JpJp *= xi / (0.84 if use_high_phi else 0.98)
+    def planar(Rg_, ka_, nu_):
+        kr, rr, s2 = ka_ / 40.0, Rg_ / 8.0, sigma2(Rg_)
+        pre = (1 + 0.71 * KH) ** 2
+        Jvert = 2 * Jz / (nu_ * Hgas**2)
+        xi = pre / (1 + (pre - 1) * (1 + KH ** (1 / 3) * Jvert**0.75))
+        return (
+            9.3 * J / kr * s2 * c_low * xi / 0.94,
+            35.0 * J**-0.5 * kr**0.5 * s2 * c_high * xi / 0.75,
+            6900.0 * rr**2 * s2 * c_low * xi / 0.98,
+            5900.0 * J**-0.5 * rr**2 * kr**0.5 * s2 * c_mid * xi / 0.84,
+        )
+
+    def D_phi(Lz):  # D_JphiJphi at fixed J_R, J_z, through R_g(L_z)
+        Rg_, _, ka_, nu_, _ = epicyclic(Lz)
+        P_long, P_short = planar(Rg_, ka_, nu_)[2:]
+        return P_long if (lw or P_long <= P_short) else P_short
+
+    R_long, R_short, _, _ = planar(Rg, ka, nu)
+    if lw or R_long <= R_short:
+        D_JRJR, A_JR = R_long, 0.5 * R_long / J
+    else:
+        D_JRJR, A_JR = R_short, -0.25 * R_short / J
+    D_JpJp = D_phi(L)
+    dL = 1e-4 * L
+    A_Jp = 0.25 * (D_phi(L + dL) - D_phi(L - dL)) / dL
+    D_JRJR, A_JR, D_JpJp, A_Jp = (amp2 * c for c in (D_JRJR, A_JR, D_JpJp, A_Jp))
 
     g = 2 * Om / ka
     q = 2 - 2 / g**2
@@ -743,18 +747,17 @@ def _winter27_reference(
     Dphph = g**3 / 4 * D_JRJR / (J * L)
     AvT = (A_Jp - vT * AR - DrvT) / R
 
-    nu_ratio = (nu_env * kms / kpc).to_value(1 / u.Myr) / (2 * np.pi / 75.55)
-    D_low = 0.29 * Jz / nu_ratio
-    D_mid = 0.35 * Jz * J**-0.5 / nu_ratio * kr**0.5
-    D_high = 1.2 * Jz**-0.5 * J**-0.5 * nu_ratio**0.5 * kr**0.5
-    if JRz_break < J:
-        D_JzJz, dDz = (
-            (D_high, -0.5 * D_high / Jz) if Jz > Jz_break else (D_mid, D_mid / Jz)
-        )
+    kr, nr, s2 = ka / 40.0, nu / 92.0, sigma2(Rg)
+    Z_LL = 0.25 * Jz / nr * s2 * c_h * c_low
+    Z_LS = 0.30 * Jz * J**-0.5 * kr**0.5 / nr * s2 * c_h * c_mid
+    Z_SS = 0.31 * Jz**-0.5 * J**-0.5 * (nr * kr) ** 0.5 * s2 * c_h * c_high
+    if lw or Z_LL <= Z_LS:
+        D_JzJz, A_Jz = Z_LL, 0.5 * Z_LL / Jz
+    elif Z_LS <= Z_SS:
+        D_JzJz, A_Jz = Z_LS, 0.5 * Z_LS / Jz
     else:
-        D_JzJz, dDz = D_low, D_low / Jz
-    D_JzJz *= amp2
-    A_Jz = 0.5 * amp2 * dDz
+        D_JzJz, A_Jz = Z_SS, -0.25 * Z_SS / Jz
+    D_JzJz, A_Jz = amp2 * D_JzJz, amp2 * A_Jz
     Dzz = D_JzJz / (2 * nu * Jz)
     Dvzvz = nu * D_JzJz / (2 * Jz)
     Cz = A_Jz / (2 * Jz) - D_JzJz / (4 * Jz**2)
@@ -809,10 +812,16 @@ def _winter27_reference(
             "tau_star": 40 * u.Myr,
             "H_gas": 150 * u.pc,
         },
+        {
+            "Sigma": lambda R: (
+                12 * u.Msun / u.pc**2 * np.exp(-(R - 8 * u.kpc) / (4 * u.kpc))
+            ),
+            "lambda_star": 900 * u.pc,
+        },
     ],
 )
 def test_winter27_matches_paper_formulas(opts):
-    """C coefficients match an independent transcription of App. B / the script."""
+    """C coefficients match an independent transcription of the paper's formulas."""
     from gala.dynamics.diffusion import ISMDiffusionWinter27
 
     pot = gp.MilkyWayPotential(version="v2", units=galactic)
@@ -905,19 +914,55 @@ def test_winter27_round_trip_to_actions():
             n += 1
 
     # the fits' kappa/nu rescaling and planar suppression at R_g = 8 kpc
-    kr = (ka / (np.sqrt(2) * 28 * u.km / u.s / u.kpc).decompose(galactic)).value
-    nr = (nu_Rg / (2 * np.pi / 75.55 / u.Myr).decompose(galactic)).value
-    nu_kms = nu_Rg / (1 * u.km / u.s / u.kpc).decompose(galactic).value
-    KH, Jvert = 2 * np.pi / 0.6 * 0.25, 2 * jz / (nu_kms * 0.25**2)  # k_* H_gas
+    kms_kpc = (1 * u.km / u.s / u.kpc).decompose(galactic).value
+    kr, nr = ka / (40 * kms_kpc), nu_Rg / (92 * kms_kpc)
+    KH, Jvert = 2 * np.pi / 0.6 * 0.2, 2 * jz / (nu_Rg / kms_kpc * 0.2**2)  # k_* H_gas
     pre = (1 + 0.71 * KH) ** 2
-    xi = pre / (1 + (pre - 1) * (1 + KH ** (1 / 3) * Jvert**0.75))
+    uu = KH ** (1 / 3) * Jvert**0.75
+    xi = pre / (1 + (pre - 1) * (1 + uu))
+    c_h = ((1 + KH) / 3.1) ** -2
     sR, sP = xi / 0.94, xi / 0.98
+    D_P = 6900.0 * sP
+    # A_Jphi = Omega/(R_g kappa^2) dD/dR_g = D dlnD/dlnR_g / (2 J_phi) for a flat
+    # curve; D ~ R_g^2 xi(nu) and nu ~ 1/R in this potential
+    dlnD = 2 - 0.75 * (pre - 1) * uu / (1 + (pre - 1) * (1 + uu))
+    Jphi = Rg * vc / Ju
     np.testing.assert_allclose(
-        D_J / n / Du, [9.3 * jR / kr * sR, 6900.0 * sP, 0.29 * jz / nr], rtol=0.01
+        D_J / n / Du, [9.3 * jR / kr * sR, D_P, 0.25 * jz / nr * c_h], rtol=0.01
     )
     np.testing.assert_allclose(
-        A_J / n / (Du / Ju), [4.65 / kr * sR, 0.0, 0.145 / nr], rtol=0.01, atol=1e-3
+        A_J / n / (Du / Ju),
+        [4.65 / kr * sR, D_P * dlnD / (2 * Jphi), 0.125 / nr * c_h],
+        rtol=0.01,
     )
+
+
+def test_winter27_continuous_across_breaks():
+    """Away from the fiducial lambda_star the breaks move so that the broken power
+    laws stay continuous (fixed breaks would jump by ~1.5^3 at lambda_star=900 pc).
+    The vertical law is only continuous pairwise: vertically hot orbits jump at the
+    radial break, as in the paper, so J_R is scanned at small J_z."""
+    from gala.dynamics.diffusion import ISMDiffusionWinter27
+
+    pot = gp.MilkyWayPotential(version="v2", units=galactic)
+    model = ISMDiffusionWinter27(pot, lambda_star=900 * u.pc, H_gas=150 * u.pc)
+    kms = (1 * u.km / u.s).decompose(galactic).value
+    R = 8.0
+    vc = pot.circular_velocity([R, 0, 0] * u.kpc).decompose(galactic).value[0]
+    n = 4000
+
+    def scan(vR, vz):  # star at its guiding radius: J_R ~ vR^2, J_z ~ vz^2
+        w = np.zeros((6, n))
+        w[0], w[2], w[3], w[4], w[5] = R, 0.0, vR, vc, vz
+        return model.coefficients(w)[1]
+
+    # J_R from ~0 to ~100 kpc km/s (through the J_phi, J_R and vertical J_R breaks)
+    D = scan(np.linspace(1, 90, n) * kms, 5 * kms)
+    for i in (3, 4, 5):
+        assert np.max(np.abs(np.diff(np.log(D[:, i, i])))) < 0.01
+    # J_z from ~0 to ~10 kpc km/s at large J_R (through the vertical J_z break)
+    D = scan(80 * kms, np.linspace(1, 40, n) * kms)
+    assert np.max(np.abs(np.diff(np.log(D[:, 5, 5])))) < 0.01
 
 
 def test_winter27_integrates():

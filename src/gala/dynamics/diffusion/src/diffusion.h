@@ -82,10 +82,11 @@ void gala_diffusion_epicyclic_map(const double *epi, const double *A_J, const do
 void ism_diffusion_winter27(double t, double *pars, double *x, double *v,
                             double *mu, double *M, void *state);
 
-/* Rotation-curve tables on an increasing ln R grid (ln L_z must also increase). */
+/* Rotation-curve tables on an increasing ln R grid (ln L_z must also increase);
+   lnSigma is ln(Sigma_gas / Sigma_0) for the ISM model. */
 void *gala_diffusion_epicyclic_alloc(const double *lnR, const double *lnOmega,
                                      const double *lnkappa, const double *lnnu,
-                                     const double *lnLz, int n);
+                                     const double *lnSigma, const double *lnLz, int n);
 void gala_diffusion_epicyclic_free(void *state);
 
 /* ---- gridded state management ---- */
