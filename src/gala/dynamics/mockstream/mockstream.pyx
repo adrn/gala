@@ -544,6 +544,11 @@ cpdef mockstream_leapfrog(
             raise ValueError(
                 "The `diffusion` option only supports forward integration (dt > 0)."
             )
+        dts = np.diff(np.asarray(full_time))
+        if not (np.all(np.isfinite(dts)) and np.allclose(dts, dt, rtol=1e-6, atol=0)):
+            raise ValueError(
+                "The `diffusion` option needs a finite, uniformly spaced time grid."
+            )
         dk = <DiffusionKick*>PyCapsule_GetPointer(kick_capsule, "gala.DiffusionKick")
 
     # Setup particle potentials
