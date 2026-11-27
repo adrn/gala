@@ -3,6 +3,7 @@
 import functools
 import operator
 
+import astropy.units as u
 import numpy as np
 
 from ...units import UnitSystem
@@ -13,7 +14,12 @@ from .cydiffusion import (
     CDiffusionWrapper,
 )
 
-__all__ = ["ConstantDiffusion", "DiffusionBase", "GriddedDiffusion"]
+__all__ = [
+    "ConstantDiffusion",
+    "DiffusionBase",
+    "GriddedDiffusion",
+    "ISMDiffusionWinter27",
+]
 
 _BASIS = {"cartesian": BASIS_CARTESIAN, "cylindrical": BASIS_CYLINDRICAL}
 
@@ -335,3 +341,195 @@ class GriddedDiffusion(DiffusionBase):
             "units": self.units,
             "kick_every": self.kick_every,
         }
+
+
+class ISMDiffusionWinter27(DiffusionBase):
+    """ISM-driven orbital diffusion and drift of Winter-Granic et al. (2027).
+
+    The model is specified in action space and mapped to position-velocity drift and
+    diffusion along each orbit, so it is evaluated per orbit at every kick:
+
+    1. Epicyclic actions ``(J_R, J_phi, J_z)``, the guiding radius, and the frequencies
+       ``Omega, kappa, nu`` (with ``q_R = -dln kappa/dln R``) are computed from
+       rotation-curve tables built from ``potential``.
+    2. Action-space diffusion coefficients are the solar-neighbourhood fits of
+       Modak et al. (2026, and in prep.) for ``D_JRJR``, ``D_JphiJphi`` and
+       ``D_JzJz`` (cross terms are zero), scaled to each orbit's environment as in
+       Winter-Granic et al. (2027, Section 3.1):
+
+       - by ``kappa(R_g)``, ``nu(R_g)`` and ``R_g`` (relative to 40 km/s/kpc,
+         92 km/s/kpc and 8 kpc) and by ``(Sigma(R_g) / 12 Msun/pc^2)^2``;
+       - by ``tau_star / 70 Myr`` and a power of ``lambda_star / 600 pc``: 2.3 in the
+         long-wavelength regime, and 3.3 or 5.3 in the short-wavelength regimes;
+       - for ``D_JRJR`` and ``D_JphiJphi``, by a planar-suppression factor ``xi`` for
+         vertically hot orbits, which depends on ``J_z``, ``nu`` and ``H_gas``
+         (Modak et al. 2026, eq. 48);
+       - for ``D_JzJz``, by ``((1 + 2 pi H_gas / lambda_star) / 3.1)^-2``.
+
+       Each coefficient is a broken power law in the actions that is continuous at
+       its breaks, which therefore move with the scalings (at the fiducial values they
+       are at ``J_R`` = 0.73, 2.4 and 1.4 kpc km/s for ``D_JphiJphi``, ``D_JRJR`` and
+       ``D_JzJz``, and ``J_z`` = 1.0 kpc km/s).
+    3. Drifts are ``A_i = 1/2 dD_ii/dJ_i``. For ``J_phi`` this acts through the
+       guiding radius: ``A_Jphi = Omega / (R_g kappa^2) dD_JphiJphi/dR_g``.
+    4. ``(A_J, D_J)`` are mapped to cylindrical ``(R, phi, z, v_R, v_phi, v_z)`` drift
+       and diffusion with the paper's epicyclic formulas (Section 2.3 and App. A).
+
+    Parameters
+    ----------
+    potential : `~gala.potential.PotentialBase`
+        Axisymmetric potential used to tabulate the rotation curve (along the x axis
+        in the z=0 plane). The model uses ``potential.units``, which must match the
+        integration Hamiltonian's length and time units.
+    amplitude : float, optional
+        Strength of the ISM density fluctuations relative to the fiducial model; every
+        diffusion and drift coefficient scales as ``amplitude**2``. Default 1.
+    Sigma : `~astropy.units.Quantity` or callable, optional
+        Mean gas surface density of the ISM: a constant, or a function of cylindrical
+        radius (a Quantity) that returns a surface density Quantity. It is evaluated at
+        each orbit's guiding radius. Default 12 Msun/pc^2.
+    lambda_star : `~astropy.units.Quantity`, optional
+        Dominant spatial scale of the ISM fluctuations. Besides rescaling the fits, it
+        sets the wavenumber ``k_* = 2 pi / lambda_star`` of the planar suppression.
+        Default 600 pc.
+    tau_star : `~astropy.units.Quantity`, optional
+        Correlation time of the ISM fluctuations at ``lambda_star``. Default 70 Myr.
+    H_gas : `~astropy.units.Quantity`, optional
+        Thickness of the gas layer, which sets the planar suppression of vertically
+        hot orbits and the vertical coefficient. Default 200 pc.
+    long_wavelength_only : bool, optional
+        Always use the long-wavelength (low-action) branches of the fits, as in the
+        paper's Gaia-snail and bar-resonance examples. Default False.
+    R_min, R_max : `~astropy.units.Quantity`, optional
+        Range of the rotation-curve tables. Orbits whose guiding radius falls outside
+        get no kick. Defaults 0.5 and 50 kpc.
+    n_R : int, optional
+        Number of (log-spaced) table points. Default 512.
+    J_floor : `~astropy.units.Quantity`, optional
+        Floor on ``J_R`` and ``J_z`` used in the mapping, which is singular as either
+        action goes to zero. Default ``1e-3 kpc km/s``.
+    kick_every : int, optional
+        Apply the kick every ``kick_every`` integrator steps, with the interval since
+        the last kick as its timestep. The coefficients vary along the epicycle, so
+        keep ``kick_every * dt`` well below the epicyclic period. Default 1.
+
+    Notes
+    -----
+    - The long-radial-wavelength, short-vertical-wavelength regime keeps the
+      long-wavelength vertical coefficient, as in the paper. ``D_JzJz`` is therefore
+      discontinuous where a vertically hot orbit (``J_z`` above its break) crosses the
+      radial break; elsewhere all coefficients are continuous.
+    - ``A_JR`` and ``A_Jz`` carry the same environmental factors as ``D_JRJR`` and
+      ``D_JzJz``, so ``A = 1/2 dD/dJ`` holds throughout.
+    """
+
+    def __init__(
+        self,
+        potential,
+        amplitude=1.0,
+        Sigma=12 * u.Msun / u.pc**2,
+        lambda_star=600 * u.pc,
+        tau_star=70 * u.Myr,
+        H_gas=200 * u.pc,
+        long_wavelength_only=False,
+        R_min=0.5 * u.kpc,
+        R_max=50.0 * u.kpc,
+        n_R=512,
+        J_floor=1e-3 * u.kpc * u.km / u.s,
+        kick_every=1,
+    ):
+        self._kwargs = {
+            "potential": potential,
+            "amplitude": amplitude,
+            "Sigma": Sigma,
+            "lambda_star": lambda_star,
+            "tau_star": tau_star,
+            "H_gas": H_gas,
+            "long_wavelength_only": long_wavelength_only,
+            "R_min": R_min,
+            "R_max": R_max,
+            "n_R": n_R,
+            "J_floor": J_floor,
+        }
+        ratios = {}
+        for name, value, fiducial in [
+            ("lambda_star", lambda_star, 600 * u.pc),
+            ("tau_star", tau_star, 70 * u.Myr),
+            ("H_gas", H_gas, 200 * u.pc),
+        ]:
+            ratio = u.Quantity(value).to_value(fiducial.unit)
+            if not (np.isscalar(ratio) and np.isfinite(ratio) and ratio > 0):
+                raise ValueError(f"{name} must be a positive scalar Quantity.")
+            ratios[name] = ratio / fiducial.value
+        tau, lam = ratios["tau_star"], ratios["lambda_star"]
+
+        units = potential.units
+        super().__init__(basis="cylindrical", units=units, kick_every=kick_every)
+        self.potential = potential
+
+        R = np.geomspace(
+            R_min.decompose(units).value, R_max.decompose(units).value, int(n_R)
+        )
+        q = np.zeros((3, R.size))
+        q[0] = R
+        q = q * units["length"]
+        Phi_R = potential.gradient(q).decompose(units).value[0]
+        hess = potential.hessian(q).decompose(units).value
+        Omega2 = Phi_R / R
+        kappa2 = hess[0, 0] + 3 * Phi_R / R
+        nu2 = hess[2, 2]
+        if np.any(Omega2 <= 0) or np.any(kappa2 <= 0) or np.any(nu2 <= 0):
+            raise ValueError(
+                "The potential must have positive Omega^2, kappa^2, and nu^2 over "
+                "[R_min, R_max] in the z=0 plane."
+            )
+        lnLz = np.log(R**2 * np.sqrt(Omega2))
+        if np.any(np.diff(lnLz) <= 0):
+            raise ValueError(
+                "L_z = R v_c(R) must increase with R over [R_min, R_max] to define "
+                "guiding radii."
+            )
+
+        Sigma_R = Sigma(R * units["length"]) if callable(Sigma) else Sigma
+        Sigma_R = np.broadcast_to(
+            u.Quantity(Sigma_R).to_value(u.Msun / u.pc**2) / 12.0, R.shape
+        )
+        if not np.all(np.isfinite(Sigma_R) & (Sigma_R > 0)):
+            raise ValueError("Sigma must be positive and finite over [R_min, R_max].")
+
+        def val(x):
+            return x.decompose(units).value
+
+        params = np.array(
+            [
+                float(amplitude) ** 2,
+                val(1 * u.kpc * u.km / u.s),
+                val(1 * (u.kpc * u.km / u.s) ** 2 / u.Gyr),
+                val(J_floor),
+                float(long_wavelength_only),
+                val(40.0 * u.km / u.s / u.kpc),
+                val(92.0 * u.km / u.s / u.kpc),
+                val(8.0 * u.kpc),
+                val(H_gas),
+                val(2 * np.pi / lambda_star),
+                tau * lam**2.3,
+                tau * lam**3.3,
+                tau * lam**5.3,
+                ((1 + (2 * np.pi * H_gas / lambda_star).to_value(u.one)) / 3.1) ** -2,
+            ]
+        )
+
+        wrapper = CDiffusionWrapper()
+        wrapper.init_winter27(
+            np.log(R),
+            0.5 * np.log(Omega2),
+            0.5 * np.log(kappa2),
+            0.5 * np.log(nu2),
+            np.log(Sigma_R),
+            lnLz,
+            params,
+        )
+        self.c_instance = wrapper
+
+    def _init_kwargs(self):
+        return {**self._kwargs, "kick_every": self.kick_every}

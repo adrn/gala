@@ -38,6 +38,11 @@ New Features
   progenitor and any ``nbody`` perturbers are not kicked). Requires
   ``Integrator="leapfrog"``.
 
+- Added the ``ISMDiffusionWinter27`` class which implements a scheme (from
+  Winter-Stanic+2027) for diffusing stellar orbits from the ISM based on the
+  action-space diffusion coefficients derived in Modak+2026 based on the TIGRESS-NCR
+  simulations.
+
 
 Bug fixes
 ---------
